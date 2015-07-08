@@ -26,34 +26,32 @@ public class Main extends JavaPlugin {
     @Override
     public void onEnable() {
         EbeanHandler handler = new EbeanHandler(this);
-        
-        if (!handler.isInitialize()) {
-            handler.define(Define.class);
 
-            handler.setDriver("org.sqlite.JDBC");
-            handler.setUrl("jdbc:sqlite:" + getDataFolder()
-                    + "/data.sqlite");
+        handler.define(Define.class);
 
-            handler.setUserName("mc");
-            handler.setPassword("minmin");
+        handler.setDriver("org.sqlite.JDBC");
+        handler.setUrl("jdbc:sqlite:" + getDataFolder()
+                + "/data.sqlite");
 
-            getDataFolder().mkdir();
+        handler.setUserName("mc");
+        handler.setPassword("minmin");
 
-            try {
-                handler.initialize();
-            } catch (Exception e) {
-                throw new RuntimeException(e);
-            }
+        getDataFolder().mkdir();
+
+        try {
+            handler.initialize();
+        } catch (Exception e) {
+            throw new RuntimeException(e);
         }
         handler.install();
         handler.reflect();
-        
+
         try {
             util = new ItemUtilHandler(this).handle();
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
-        
+
         getCommand("xkit").setExecutor(new Executor(this));
 
         String[] strings = {
