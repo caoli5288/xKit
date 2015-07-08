@@ -11,5 +11,3 @@ permissions:
   xkit.admin:
     description: None.
     default: op
-    
-depend: [SimpleORM]
