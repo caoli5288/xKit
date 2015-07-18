@@ -7,7 +7,6 @@ import java.util.Map;
 
 import org.bukkit.ChatColor;
 import org.bukkit.Location;
-import org.bukkit.Material;
 import org.bukkit.World;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
@@ -27,17 +26,14 @@ import com.mengcraft.xkit.lib.ItemUtil;
 import com.mengcraft.xkit.util.ArrayBuilder;
 import com.mengcraft.xkit.util.ArrayVector;
 
-public class Executor implements CommandExecutor {
+public class Executor implements CommandExecutor, Listener {
 
-    private class EventExecutor implements Listener {
-
-        @EventHandler
-        public void handle(InventoryCloseEvent event) {
-            Inventory inventory = event.getInventory();
-            if (inventory.getHolder() instanceof Holder) {
-                save(inventory.getTitle(),
-                        inventory.getContents());
-            }
+    @EventHandler
+    public void handle(InventoryCloseEvent event) {
+        Inventory inventory = event.getInventory();
+        if (inventory.getHolder() instanceof Holder) {
+            save(inventory.getTitle(),
+                    inventory.getContents());
         }
     }
 
@@ -47,8 +43,6 @@ public class Executor implements CommandExecutor {
     private final String[] info;
 
     private final Map<String, Define> map = new HashMap<>();
-
-    private final Listener listener = new EventExecutor();
 
     private final EbeanServer server;
 
@@ -152,10 +146,10 @@ public class Executor implements CommandExecutor {
                     .eq("name", next)
                     .findUnique();
             if (define == null) {
-                define = new Define();
-                define.name = next;
+                define = server.createEntityBean(Define.class);
+                define.setName(next);
             }
-            define.data = JSONArray.toJSONString(list);
+            define.setData(JSONArray.toJSONString(list));
             server.save(define);
             map.put(next, define);
         } else if (map.get(next) != null) {
@@ -166,7 +160,7 @@ public class Executor implements CommandExecutor {
     private List<String> convert(ItemStack[] contents) {
         List<String> list = new ArrayList<>();
         for (ItemStack stack : contents) {
-            if (stack != null && stack.getType() != Material.AIR) {
+            if (stack != null && stack.getTypeId() != 0) {
                 try {
                     list.add(util.convert(stack));
                 } catch (Exception e) {
@@ -185,7 +179,7 @@ public class Executor implements CommandExecutor {
                 ChatColor.GOLD + "/xkit kit <kit_name> <player_name>"
         };
         this.util = main.getUtil();
-        in.getServer().getPluginManager().registerEvents(listener, in);
+        in.getServer().getPluginManager().registerEvents(this, in);
         this.server = in.getDatabase();
         List<Define> list = in.getDatabase().find(Define.class).findList();
         for (Define define : list) {
