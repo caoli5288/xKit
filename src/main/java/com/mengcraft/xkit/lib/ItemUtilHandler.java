@@ -1,7 +1,6 @@
 package com.mengcraft.xkit.lib;
 
 import java.util.Arrays;
-import java.util.Random;
 
 import org.bukkit.Material;
 import org.bukkit.Server;
@@ -84,7 +83,6 @@ public class ItemUtilHandler {
             meta.setLore(Arrays.asList("a", "b", "c"));
 
             item.setItemMeta(meta);
-            item.setAmount(new Random().nextInt(64));
             item.addUnsafeEnchantment(Enchantment.DAMAGE_ALL, 0);
         }
         return item;
