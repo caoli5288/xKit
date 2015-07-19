@@ -51,6 +51,12 @@ public class Main extends JavaPlugin {
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
+        
+        try {
+            new Metrics(this).start();
+        } catch (Exception e) {
+            getLogger().warning(e.toString());
+        }
 
         getCommand("xkit").setExecutor(new Executor(this));
 
