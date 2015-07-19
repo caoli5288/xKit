@@ -1,6 +1,5 @@
 package com.mengcraft.xkit;
 
-import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.Id;
 import javax.persistence.Table;
@@ -10,13 +9,10 @@ import javax.persistence.Table;
 public class Define {
 
     @Id
-    int id;
+    public int id;
 
-    @Column
-    String name;
-
-    @Column
-    String data;
+    public String name;
+    public String data;
 
     public int getId() {
         return id;
@@ -41,4 +37,5 @@ public class Define {
     public void setData(String data) {
         this.data = data;
     }
+
 }

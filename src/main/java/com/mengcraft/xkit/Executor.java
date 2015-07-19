@@ -28,22 +28,10 @@ import com.mengcraft.xkit.util.ArrayVector;
 
 public class Executor implements CommandExecutor, Listener {
 
-    @EventHandler
-    public void handle(InventoryCloseEvent event) {
-        Inventory inventory = event.getInventory();
-        if (inventory.getHolder() instanceof Holder) {
-            save(inventory.getTitle(),
-                    inventory.getContents());
-        }
-    }
-
     private final ItemUtil util;
-
     private final Main main;
     private final String[] info;
-
     private final Map<String, Define> map = new HashMap<>();
-
     private final EbeanServer server;
 
     @Override
@@ -66,6 +54,14 @@ public class Executor implements CommandExecutor, Listener {
         else sender.sendMessage(info);
 
         return true;
+    }
+
+    @EventHandler
+    public void handle(InventoryCloseEvent event) {
+        Inventory inventory = event.getInventory();
+        if (inventory.getHolder() instanceof Holder) {
+            save(inventory.getTitle(), inventory.getContents());
+        }
     }
 
     private void kit(CommandSender sender, String kit, String name) {
@@ -161,14 +157,18 @@ public class Executor implements CommandExecutor, Listener {
         List<String> list = new ArrayList<>();
         for (ItemStack stack : contents) {
             if (stack != null && stack.getTypeId() != 0) {
-                try {
-                    list.add(util.convert(stack));
-                } catch (Exception e) {
-                    main.getLogger().warning(e.getMessage());
-                }
+                add(list, stack);
             }
         }
         return list;
+    }
+
+    private void add(List<String> list, ItemStack stack) {
+        try {
+            list.add(util.convert(stack));
+        } catch (Exception e) {
+            main.getLogger().warning(e.getMessage());
+        }
     }
 
     public Executor(Main in) {
