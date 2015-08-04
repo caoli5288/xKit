@@ -1,5 +1,7 @@
-[![Build Status](http://ci.mengcraft.com:8080/job/xKit/badge/icon)](http://ci.mengcraft.com:8080/job/xKit/)
-
-----
-# xKit 
+# xKit [![Build Status](http://ci.mengcraft.com:8080/job/xKit/badge/icon)](http://ci.mengcraft.com:8080/job/xKit/)
 A kit tools manager for bukkit server.
+
+## Commands
+- /xkit def
+- /xkit def <kit_name>
+- /xkit kit <kit_name> <player_name>
