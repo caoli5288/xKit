@@ -1,6 +1,6 @@
 name: xKit
 main: com.mengcraft.xkit.Main
-version: 1.0
+version: 1.0.1
 
 commands:
   xkit:
@@ -11,3 +11,5 @@ permissions:
   xkit.admin:
     description: None.
     default: op
+    
+depend: [SimpleORM]

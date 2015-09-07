@@ -5,9 +5,9 @@ import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.InventoryHolder;
 import org.bukkit.plugin.java.JavaPlugin;
 
+import com.mengcraft.simpleorm.EbeanHandler;
 import com.mengcraft.xkit.lib.ItemUtil;
 import com.mengcraft.xkit.lib.ItemUtilHandler;
-import com.mengcraft.xkit.orm.EbeanHandler;
 
 public class Main extends JavaPlugin {
 
