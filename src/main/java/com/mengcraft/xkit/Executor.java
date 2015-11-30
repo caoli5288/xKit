@@ -52,6 +52,11 @@ public class Executor implements CommandExecutor, Listener {
             } else {
                 kit(sender, vector.next(), vector.next());
             }
+        } else if (action.equals("reload")) {
+            for (KitDefine define : main.getDatabase().find(KitDefine.class).findList()) {
+                this.map.put(define.getName(), define);
+            }
+            sender.sendMessage(ChatColor.DARK_RED + "DONE!");
         } else {
             sender.sendMessage(info);
         }
