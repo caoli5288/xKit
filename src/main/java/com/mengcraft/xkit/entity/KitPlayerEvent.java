@@ -5,6 +5,7 @@ import com.avaje.ebean.annotation.CreatedTimestamp;
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.Id;
+import javax.persistence.OneToOne;
 import java.sql.Timestamp;
 
 /**
@@ -19,8 +20,8 @@ public class KitPlayerEvent {
     @Column
     private String name;
 
-    @Column
-    private KitDefine kitDefine;
+    @OneToOne
+    private KitDefine define;
 
     @CreatedTimestamp
     private Timestamp time;
@@ -41,12 +42,12 @@ public class KitPlayerEvent {
         this.name = name;
     }
 
-    public KitDefine getKitDefine() {
-        return kitDefine;
+    public KitDefine getDefine() {
+        return define;
     }
 
-    public void setKitDefine(KitDefine kitDefine) {
-        this.kitDefine = kitDefine;
+    public void setDefine(KitDefine define) {
+        this.define = define;
     }
 
     public Timestamp getTime() {

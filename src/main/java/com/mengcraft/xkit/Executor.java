@@ -101,7 +101,7 @@ public class Executor implements CommandExecutor, Listener {
             }
             KitPlayerEvent event = new KitPlayerEvent();
             event.setName(who.getName());
-            event.setKitDefine(define);
+            event.setDefine(define);
             main.execute(() -> source.save(event));
         } else {
             String[] out = {
@@ -117,7 +117,7 @@ public class Executor implements CommandExecutor, Listener {
         return source.find(KitPlayerEvent.class)
                 .where()
                 .eq("name", name)
-                .gt("time", new Timestamp(System.currentTimeMillis() - define.getInterval() * 3600000))
+                .gt("time", new Timestamp(System.currentTimeMillis() - define.getIntervalHour() * 3600000))
                 .findUnique() == null;
     }
 

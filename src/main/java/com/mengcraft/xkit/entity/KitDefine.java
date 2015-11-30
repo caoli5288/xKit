@@ -3,7 +3,6 @@ package com.mengcraft.xkit.entity;
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.Id;
-import javax.persistence.Table;
 
 @Entity
 public class KitDefine {
@@ -18,7 +17,7 @@ public class KitDefine {
     private String data;
 
     @Column
-    private int interval;
+    private int intervalHour;
 
     public int getId() {
         return id;
@@ -44,12 +43,12 @@ public class KitDefine {
         this.data = data;
     }
 
-    public int getInterval() {
-        return interval;
+    public int getIntervalHour() {
+        return intervalHour;
     }
 
-    public void setInterval(int interval) {
-        this.interval = interval;
+    public void setIntervalHour(int intervalHour) {
+        this.intervalHour = intervalHour;
     }
 
 }
