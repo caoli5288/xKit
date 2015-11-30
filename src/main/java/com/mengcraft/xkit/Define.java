@@ -9,10 +9,10 @@ import javax.persistence.Table;
 public class Define {
 
     @Id
-    public int id;
+    private int id;
 
-    public String name;
-    public String data;
+    private String name;
+    private String data;
 
     public int getId() {
         return id;

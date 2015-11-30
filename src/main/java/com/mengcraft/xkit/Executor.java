@@ -68,7 +68,7 @@ public class Executor implements CommandExecutor, Listener {
         Player who = main.getServer().getPlayerExact(name);
         Define def = map.get(kit);
         if (who != null && kit != null) {
-            ItemStack[] stacks = convert(def.data);
+            ItemStack[] stacks = convert(def.getData());
             HashMap<?, ItemStack> out = who.getInventory()
                     .addItem(stacks);
             if (out.size() != 0) {
@@ -106,7 +106,7 @@ public class Executor implements CommandExecutor, Listener {
             Player player = (Player) sender;
             if (map.get(next) != null) {
                 Define define = map.get(next);
-                ItemStack[] stacks = convert(define.data);
+                ItemStack[] stacks = convert(define.getData());
                 Inventory inventory = main.getInventory(next);
                 inventory.setContents(stacks);
                 player.openInventory(inventory);
@@ -183,7 +183,7 @@ public class Executor implements CommandExecutor, Listener {
         this.server = in.getDatabase();
         List<Define> list = in.getDatabase().find(Define.class).findList();
         for (Define define : list) {
-            this.map.put(define.name, define);
+            this.map.put(define.getName(), define);
         }
     }
 
