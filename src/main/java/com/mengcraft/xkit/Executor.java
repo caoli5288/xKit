@@ -82,8 +82,11 @@ public class Executor implements CommandExecutor, Listener {
 
         KitDefine define = map.get(kit);
 
-        if (!(sender.hasPermission("xkit.admin") || checkInterval(who.getName(), define))) {
+        KitPlayerEvent selectedEvent;
+
+        if (!(sender.hasPermission("xkit.admin") || (selectedEvent = checkInterval(who.getName(), define)) == null)) {
             sender.sendMessage(ChatColor.DARK_RED + "你暂时不能这么做");
+            sender.sendMessage(ChatColor.DARK_RED + "冷却时间" + (define.getIntervalHour() * 60 - (System.currentTimeMillis() - selectedEvent.getTime().getTime()) / 60000) + "分钟");
             return;
         }
         if (who != null && kit != null) {
@@ -113,12 +116,13 @@ public class Executor implements CommandExecutor, Listener {
         sender.sendMessage(ChatColor.GREEN + "DONE!");
     }
 
-    private boolean checkInterval(String name, KitDefine define) {
+    private KitPlayerEvent checkInterval(String name, KitDefine define) {
         return source.find(KitPlayerEvent.class)
                 .where()
                 .eq("name", name)
+                .eq("define", define)
                 .gt("time", new Timestamp(System.currentTimeMillis() - define.getIntervalHour() * 3600000))
-                .findUnique() == null;
+                .findUnique();
     }
 
     private void define(CommandSender sender) {
