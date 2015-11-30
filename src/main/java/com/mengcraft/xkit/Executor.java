@@ -118,7 +118,7 @@ public class Executor implements CommandExecutor, Listener {
             };
             sender.sendMessage(out);
         }
-        sender.sendMessage(ChatColor.GREEN + "DONE!");
+        sender.sendMessage(ChatColor.GREEN + "你的礼包领取完毕了");
     }
 
     private KitPlayerEvent checkInterval(String name, KitDefine define) {
