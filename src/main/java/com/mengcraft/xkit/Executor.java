@@ -1,10 +1,11 @@
 package com.mengcraft.xkit;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
+import com.avaje.ebean.EbeanServer;
+import com.mengcraft.xkit.entity.KitDefine;
+import com.mengcraft.xkit.entity.KitPlayerEvent;
+import com.mengcraft.xkit.lib.ItemUtil;
+import com.mengcraft.xkit.util.ArrayBuilder;
+import com.mengcraft.xkit.util.ArrayVector;
 import org.bukkit.ChatColor;
 import org.bukkit.Location;
 import org.bukkit.World;
@@ -20,38 +21,40 @@ import org.bukkit.inventory.ItemStack;
 import org.json.simple.JSONArray;
 import org.json.simple.parser.JSONParser;
 
-import com.avaje.ebean.EbeanServer;
-import com.mengcraft.xkit.Main.Holder;
-import com.mengcraft.xkit.lib.ItemUtil;
-import com.mengcraft.xkit.util.ArrayBuilder;
-import com.mengcraft.xkit.util.ArrayVector;
+import java.sql.Timestamp;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 public class Executor implements CommandExecutor, Listener {
 
     private final ItemUtil util;
     private final Main main;
     private final String[] info;
-    private final Map<String, Define> map = new HashMap<>();
-    private final EbeanServer server;
+    private final Map<String, KitDefine> map = new HashMap<>();
+    private final EbeanServer source;
 
     @Override
     public boolean onCommand(CommandSender sender, Command command,
-            String label, String[] args) {
+                             String label, String[] args) {
         ArrayVector<String> vector = new ArrayVector<>(args);
 
         String action = vector.next();
 
-        if (action == null) sender.sendMessage(info);
-
-        else if (action.equals("def")) define(sender, vector.next());
-        else if (action.equals("kit")) {
-            if (vector.remain() != 2) {
+        if (action == null) {
+            sender.sendMessage(info);
+        } else if (action.equals("def") && sender.hasPermission("xkit.admin")) {
+            define(sender, vector.next());
+        } else if (action.equals("kit")) {
+            if (vector.remain() < 1) {
                 sender.sendMessage(info);
             } else {
                 kit(sender, vector.next(), vector.next());
             }
+        } else {
+            sender.sendMessage(info);
         }
-        else sender.sendMessage(info);
 
         return true;
     }
@@ -59,18 +62,33 @@ public class Executor implements CommandExecutor, Listener {
     @EventHandler
     public void handle(InventoryCloseEvent event) {
         Inventory inventory = event.getInventory();
-        if (inventory.getHolder() instanceof Holder) {
+        if (inventory.getHolder() == main.getHolder()) {
             save(inventory.getTitle(), inventory.getContents());
         }
     }
 
     private void kit(CommandSender sender, String kit, String name) {
-        Player who = main.getServer().getPlayerExact(name);
-        Define def = map.get(kit);
+        if (!(sender.hasPermission("xkit.use." + kit) || sender.hasPermission("xkit.admin"))) {
+            sender.sendMessage(ChatColor.DARK_RED + "你没有权限这么做");
+            return;
+        }
+        if (!(name == null || sender.getName().equals(name) || sender.hasPermission("xkit.admin"))) {
+            sender.sendMessage(ChatColor.DARK_RED + "你没有权限这么做");
+            return;
+        }
+        Player who = name == null && Player.class.isInstance(sender)
+                ? (Player) sender
+                : main.getServer().getPlayerExact(name);
+
+        KitDefine define = map.get(kit);
+
+        if (!(sender.hasPermission("xkit.admin") || checkInterval(who.getName(), define))) {
+            sender.sendMessage(ChatColor.DARK_RED + "你暂时不能这么做");
+            return;
+        }
         if (who != null && kit != null) {
-            ItemStack[] stacks = convert(def.data);
-            HashMap<?, ItemStack> out = who.getInventory()
-                    .addItem(stacks);
+            ItemStack[] stacks = convert(define.getData());
+            HashMap<?, ItemStack> out = who.getInventory().addItem(stacks);
             if (out.size() != 0) {
                 Location location = who.getLocation();
                 World world = who.getWorld();
@@ -81,6 +99,10 @@ public class Executor implements CommandExecutor, Listener {
                 sender.sendMessage(ChatColor.DARK_RED + "DONE WITH"
                         + " SOME ITEMS DROP ON FLOOR！");
             }
+            KitPlayerEvent event = new KitPlayerEvent();
+            event.setName(who.getName());
+            event.setKitDefine(define);
+            main.execute(() -> source.save(event));
         } else {
             String[] out = {
                     ChatColor.DARK_RED + "PLAYER NOT ONLINE,",
@@ -89,6 +111,14 @@ public class Executor implements CommandExecutor, Listener {
             sender.sendMessage(out);
         }
         sender.sendMessage(ChatColor.GREEN + "DONE!");
+    }
+
+    private boolean checkInterval(String name, KitDefine define) {
+        return source.find(KitPlayerEvent.class)
+                .where()
+                .eq("name", name)
+                .gt("time", new Timestamp(System.currentTimeMillis() - define.getInterval() * 3600000))
+                .findUnique() == null;
     }
 
     private void define(CommandSender sender) {
@@ -105,8 +135,8 @@ public class Executor implements CommandExecutor, Listener {
         if (sender instanceof Player && next != null) {
             Player player = (Player) sender;
             if (map.get(next) != null) {
-                Define define = map.get(next);
-                ItemStack[] stacks = convert(define.data);
+                KitDefine define = map.get(next);
+                ItemStack[] stacks = convert(define.getData());
                 Inventory inventory = main.getInventory(next);
                 inventory.setContents(stacks);
                 player.openInventory(inventory);
@@ -137,22 +167,23 @@ public class Executor implements CommandExecutor, Listener {
     public void save(String next, ItemStack[] contents) {
         List<String> list = convert(contents);
         if (list.size() != 0) {
-            Define define = server.find(Define.class)
+            KitDefine define = source.find(KitDefine.class)
                     .where()
                     .eq("name", next)
                     .findUnique();
             if (define == null) {
-                define = server.createEntityBean(Define.class);
+                define = source.createEntityBean(KitDefine.class);
                 define.setName(next);
             }
             define.setData(JSONArray.toJSONString(list));
-            server.save(define);
+            source.save(define);
             map.put(next, define);
         } else if (map.get(next) != null) {
-            server.delete(map.remove(next));
+            source.delete(map.remove(next));
         }
     }
 
+    @SuppressWarnings("deprecation")
     private List<String> convert(ItemStack[] contents) {
         List<String> list = new ArrayList<>();
         for (ItemStack stack : contents) {
@@ -171,20 +202,23 @@ public class Executor implements CommandExecutor, Listener {
         }
     }
 
-    public Executor(Main in) {
-        this.main = in;
-        this.info = new String[] {
+    public Executor(Main main, ItemUtil util) {
+        this.main = main;
+        this.info = new String[]{
                 ChatColor.GOLD + "/xkit def (shown all defined kits)",
                 ChatColor.GOLD + "/xkit def <kit_name> (not console)",
                 ChatColor.GOLD + "/xkit kit <kit_name> <player_name>"
         };
-        this.util = main.getUtil();
-        in.getServer().getPluginManager().registerEvents(this, in);
-        this.server = in.getDatabase();
-        List<Define> list = in.getDatabase().find(Define.class).findList();
-        for (Define define : list) {
-            this.map.put(define.name, define);
+        this.util = util;
+        this.source = main.getDatabase();
+        for (KitDefine define : main.getDatabase().find(KitDefine.class).findList()) {
+            this.map.put(define.getName(), define);
         }
+    }
+
+    public void bind() {
+        main.getCommand("xkit").setExecutor(this);
+        main.getServer().getPluginManager().registerEvents(this, main);
     }
 
 }

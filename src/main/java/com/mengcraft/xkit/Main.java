@@ -1,64 +1,46 @@
 package com.mengcraft.xkit;
 
+import com.mengcraft.simpleorm.EbeanHandler;
+import com.mengcraft.simpleorm.EbeanManager;
+import com.mengcraft.xkit.entity.KitDefine;
+import com.mengcraft.xkit.entity.KitPlayerEvent;
+import com.mengcraft.xkit.lib.ItemUtil;
+import com.mengcraft.xkit.lib.ItemUtilHandler;
 import org.bukkit.ChatColor;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.InventoryHolder;
 import org.bukkit.plugin.java.JavaPlugin;
 
-import com.mengcraft.simpleorm.EbeanHandler;
-import com.mengcraft.xkit.lib.ItemUtil;
-import com.mengcraft.xkit.lib.ItemUtilHandler;
-
 public class Main extends JavaPlugin {
 
-    private final Holder holder = new Holder();
-
-    private ItemUtil util;
-
-    public Holder getHolder() {
-        return holder;
-    }
-
-    public Inventory getInventory(String next) {
-        return getServer().createInventory(holder, 54, next);
-    }
+    private final InventoryHolder holder = (() -> null);
 
     @Override
     public void onEnable() {
-        EbeanHandler handler = new EbeanHandler(this);
-
-        handler.define(Define.class);
-
-        handler.setDriver("org.sqlite.JDBC");
-        handler.setUrl("jdbc:sqlite:" + getDataFolder()
-                + "/data.sqlite");
-
-        handler.setUserName("mc");
-        handler.setPassword("minmin");
-
-        getDataFolder().mkdir();
-
-        try {
-            handler.initialize();
-        } catch (Exception e) {
-            throw new RuntimeException(e);
+        EbeanHandler handler = EbeanManager.DEFAULT.getHandler(this);
+        if (!handler.isInitialized()) {
+            handler.define(KitDefine.class);
+            handler.define(KitPlayerEvent.class);
+            try {
+                handler.initialize();
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
         }
         handler.install();
         handler.reflect();
 
         try {
-            util = new ItemUtilHandler(this).handle();
+            new Executor(this, new ItemUtilHandler(this).handle()).bind();
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
-        
+
         try {
             new Metrics(this).start();
         } catch (Exception e) {
             getLogger().warning(e.toString());
         }
-
-        getCommand("xkit").setExecutor(new Executor(this));
 
         String[] strings = {
                 ChatColor.GREEN + "梦梦家高性能服务器出租店",
@@ -67,16 +49,16 @@ public class Main extends JavaPlugin {
         getServer().getConsoleSender().sendMessage(strings);
     }
 
-    public ItemUtil getUtil() {
-        return util;
+    public InventoryHolder getHolder() {
+        return holder;
     }
 
-    public class Holder implements InventoryHolder {
-
-        @Override
-        public Inventory getInventory() {
-            return null;
-        }
-
+    public Inventory getInventory(String next) {
+        return getServer().createInventory(holder, 54, next);
     }
+
+    public void execute(Runnable runnable) {
+        getServer().getScheduler().runTaskAsynchronously(this, runnable);
+    }
+
 }

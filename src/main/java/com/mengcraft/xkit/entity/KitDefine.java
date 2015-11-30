@@ -1,18 +1,24 @@
-package com.mengcraft.xkit;
+package com.mengcraft.xkit.entity;
 
+import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.Id;
 import javax.persistence.Table;
 
 @Entity
-@Table(name = "xkit_define")
-public class Define {
+public class KitDefine {
 
     @Id
-    public int id;
+    private int id;
 
-    public String name;
-    public String data;
+    @Column
+    private String name;
+
+    @Column
+    private String data;
+
+    @Column
+    private int interval;
 
     public int getId() {
         return id;
@@ -36,6 +42,14 @@ public class Define {
 
     public void setData(String data) {
         this.data = data;
+    }
+
+    public int getInterval() {
+        return interval;
+    }
+
+    public void setInterval(int interval) {
+        this.interval = interval;
     }
 
 }

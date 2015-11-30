@@ -5,11 +5,14 @@ version: 1.0.1
 commands:
   xkit:
     description: None.
-    permission: xkit.admin
+    permission: xkit.use
     
 permissions:
   xkit.admin:
     description: None.
     default: op
+  xkit.use:
+    description: None.
+    default: true
     
 depend: [SimpleORM]
