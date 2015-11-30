@@ -1,6 +1,6 @@
 name: xKit
 main: com.mengcraft.xkit.Main
-version: 1.0.1
+version: ${project.version}
 
 commands:
   xkit:
