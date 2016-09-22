@@ -1,82 +1,112 @@
 package com.mengcraft.xkit;
 
-import org.bukkit.ChatColor;
+import com.avaje.ebean.Query;
+import com.comphenix.protocol.utility.StreamSerializer;
+import com.mengcraft.simpleorm.DatabaseException;
+import com.mengcraft.simpleorm.EbeanHandler;
+import com.mengcraft.simpleorm.EbeanManager;
+import com.mengcraft.xkit.entity.Kit;
+import com.mengcraft.xkit.entity.KitOrder;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.InventoryHolder;
+import org.bukkit.inventory.ItemStack;
 import org.bukkit.plugin.java.JavaPlugin;
 
-import com.mengcraft.simpleorm.EbeanHandler;
-import com.mengcraft.xkit.lib.ItemUtil;
-import com.mengcraft.xkit.lib.ItemUtilHandler;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.Callable;
+import java.util.function.Consumer;
+import java.util.function.Function;
 
-public class Main extends JavaPlugin {
-
-    private final Holder holder = new Holder();
-
-    private ItemUtil util;
-
-    public Holder getHolder() {
-        return holder;
-    }
-
-    public Inventory getInventory(String next) {
-        return getServer().createInventory(holder, 54, next);
-    }
+public class Main extends JavaPlugin implements InventoryHolder {
 
     @Override
     public void onEnable() {
-        EbeanHandler handler = new EbeanHandler(this);
-
-        handler.define(Define.class);
-
-        handler.setDriver("org.sqlite.JDBC");
-        handler.setUrl("jdbc:sqlite:" + getDataFolder()
-                + "/data.sqlite");
-
-        handler.setUserName("mc");
-        handler.setPassword("minmin");
-
-        getDataFolder().mkdir();
-
-        try {
-            handler.initialize();
-        } catch (Exception e) {
-            throw new RuntimeException(e);
+        EbeanHandler db = EbeanManager.DEFAULT.getHandler(this);
+        if (db.isNotInitialized()) {
+            db.define(Kit.class);
+            db.define(KitOrder.class);
+            try {
+                db.initialize();
+            } catch (DatabaseException e) {
+                throw new RuntimeException("db");
+            }
         }
-        handler.install();
-        handler.reflect();
+        db.install();
+        db.reflect();
 
-        try {
-            util = new ItemUtilHandler(this).handle();
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
-        
-        try {
-            new Metrics(this).start();
-        } catch (Exception e) {
-            getLogger().warning(e.toString());
-        }
-
-        getCommand("xkit").setExecutor(new Executor(this));
-
-        String[] strings = {
-                ChatColor.GREEN + "梦梦家高性能服务器出租店",
-                ChatColor.GREEN + "shop105595113.taobao.com"
-        };
-        getServer().getConsoleSender().sendMessage(strings);
+        getCommand("xkit").setExecutor(new KitCommand(this));
     }
 
-    public ItemUtil getUtil() {
-        return util;
+    public static boolean isKitView(Inventory inventory) {
+        return inventory.getHolder() instanceof Main;
     }
 
-    public class Holder implements InventoryHolder {
-
-        @Override
-        public Inventory getInventory() {
-            return null;
+    public Inventory getInventory(boolean admin) {
+        if (admin) {
+            return getServer().createInventory(this, 54, "管理模式");
         }
-
+        return getServer().createInventory(this, 54, "礼物箱子");
     }
+
+    @Override
+    public Inventory getInventory() {
+        return getInventory(false);
+    }
+
+    public void dispatch(String command) {
+        getServer().dispatchCommand(getServer().getConsoleSender(), command);
+    }
+
+    public <T> void process(Callable<T> callable, Consumer<T> consumer) {
+        execute(() -> {
+            try {
+                T result = callable.call();
+                process(() -> consumer.accept(result));
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        });
+    }
+
+    public void process(Runnable runnable) {
+        getServer().getScheduler().runTask(this, runnable);
+    }
+
+    public void execute(Runnable runnable) {
+        getServer().getScheduler().runTaskAsynchronously(this, runnable);
+    }
+
+    public <T> Query<T> find(Class<T> type) {
+        return getDatabase().find(type);
+    }
+
+    public static int unixTime() {
+        return Math.toIntExact(System.currentTimeMillis() / 1000);
+    }
+
+    public static boolean eq(Object i, Object j) {
+        return i == j || (i != null && i.equals(j));
+    }
+
+    public static <T, E> List<T> collect(List<E> in, Function<E, T> func) {
+        List<T> out = new ArrayList<>(in.size());
+        for (E i : in) {
+            out.add(func.apply(i));
+        }
+        return out;
+    }
+
+    public static ItemStack decode(String in) {
+        try {
+            return SERIALIZER.deserializeItemStack(in);
+        } catch (IOException ignore) {
+            ignore.printStackTrace();
+            return new ItemStack(0, 0);
+        }
+    }
+
+    public static final StreamSerializer SERIALIZER = new StreamSerializer();
+
 }

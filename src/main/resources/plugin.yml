@@ -1,15 +1,18 @@
 name: xKit
 main: com.mengcraft.xkit.Main
-version: 1.0.1
+version: ${project.version}
 
 commands:
   xkit:
     description: None.
-    permission: xkit.admin
+    permission: xkit.use
     
 permissions:
   xkit.admin:
     description: None.
     default: op
-    
-depend: [SimpleORM]
+  xkit.use:
+    description: None.
+    default: true
+
+depend: [ProtocolLib, SimpleORM]
