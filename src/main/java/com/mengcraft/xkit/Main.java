@@ -11,6 +11,7 @@ import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.InventoryHolder;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.plugin.java.JavaPlugin;
+import org.json.simple.JSONValue;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -36,23 +37,28 @@ public class Main extends JavaPlugin implements InventoryHolder {
         db.install();
         db.reflect();
 
-        getCommand("xkit").setExecutor(new KitCommand(this));
+        execute(() -> new Metrics(this).start());
+
+        KitCommand command = new KitCommand(this);
+        getCommand("xkit").setExecutor(command);
+
+        getServer().getPluginManager().registerEvents(new KitListener(this, command), this);
     }
 
     public static boolean isKitView(Inventory inventory) {
         return inventory.getHolder() instanceof Main;
     }
 
-    public Inventory getInventory(boolean admin) {
-        if (admin) {
-            return getServer().createInventory(this, 54, "管理模式");
+    public Inventory getInventory(String name) {
+        if (eq(name, null)) {
+            return getServer().createInventory(this, KIT_SIZE, "礼物箱子");
         }
-        return getServer().createInventory(this, 54, "礼物箱子");
+        return getServer().createInventory(this, KIT_SIZE, "管理模式|" + name);
     }
 
     @Override
     public Inventory getInventory() {
-        return getInventory(false);
+        return getInventory(null);
     }
 
     public void dispatch(String command) {
@@ -78,8 +84,16 @@ public class Main extends JavaPlugin implements InventoryHolder {
         getServer().getScheduler().runTaskAsynchronously(this, runnable);
     }
 
+    public <T> void execute(T in, Consumer<T> consumer) {
+        execute(() -> consumer.accept(in));
+    }
+
     public <T> Query<T> find(Class<T> type) {
         return getDatabase().find(type);
+    }
+
+    public void save(Object object) {
+        getDatabase().save(object);
     }
 
     public static int unixTime() {
@@ -93,7 +107,10 @@ public class Main extends JavaPlugin implements InventoryHolder {
     public static <T, E> List<T> collect(List<E> in, Function<E, T> func) {
         List<T> out = new ArrayList<>(in.size());
         for (E i : in) {
-            out.add(func.apply(i));
+            T ref = func.apply(i);
+            if (!eq(ref, null)) {
+                out.add(ref);
+            }
         }
         return out;
     }
@@ -103,10 +120,32 @@ public class Main extends JavaPlugin implements InventoryHolder {
             return SERIALIZER.deserializeItemStack(in);
         } catch (IOException ignore) {
             ignore.printStackTrace();
-            return new ItemStack(0, 0);
         }
+        return null;
+    }
+
+    public static String encode(ItemStack item) {
+        try {
+            return SERIALIZER.serializeItemStack(item);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    public static boolean valid(Kit kit) {
+        return kit.hasItem() || kit.hasCommand();
+    }
+
+    public static ItemStack[] getItemList(Kit kit) {
+        List<String> list = List.class.cast(JSONValue.parse(kit.getItem()));
+        List<ItemStack> i = Main.collect(list, text -> {
+            return Main.decode(text);
+        });
+        return i.toArray(new ItemStack[Main.KIT_SIZE]);
     }
 
     public static final StreamSerializer SERIALIZER = new StreamSerializer();
+    public static final int KIT_SIZE = 54;
 
 }

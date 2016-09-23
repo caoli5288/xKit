@@ -1,19 +1,8 @@
 package com.mengcraft.xkit.entity;
 
-import com.comphenix.protocol.utility.StreamSerializer;
-import com.google.common.collect.ImmutableList;
-import com.mengcraft.xkit.Main;
-import org.bukkit.inventory.ItemStack;
-import org.json.simple.JSONValue;
-
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.Id;
-import javax.persistence.Transient;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.stream.Collector;
 
 /**
  * Created on 16-9-23.
@@ -85,20 +74,16 @@ public class Kit {
         this.period = period;
     }
 
+    public boolean hasCommand() {
+        return getCommand() != null;
+    }
+
     public String getCommand() {
         return command;
     }
 
     public void setCommand(String command) {
         this.command = command;
-    }
-
-    @SuppressWarnings("unchecked")
-    public List<ItemStack> getItemList() {
-        List<String> list = List.class.cast(JSONValue.parse(getItem()));
-        return Main.collect(list, text -> {
-            return Main.decode(String.valueOf(text));
-        });
     }
 
 }

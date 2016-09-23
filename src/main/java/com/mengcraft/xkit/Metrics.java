@@ -117,7 +117,7 @@ public class Metrics {
      */
     private volatile BukkitTask task = null;
 
-    public Metrics(final Plugin plugin) throws IOException {
+    public Metrics(final Plugin plugin) {
         if (plugin == null) {
             throw new IllegalArgumentException("Plugin cannot be null");
         }
@@ -137,7 +137,6 @@ public class Metrics {
         if (configuration.get("guid", null) == null) {
             configuration.options().header("http://mcstats.org")
                     .copyDefaults(true);
-            configuration.save(configurationFile);
         }
 
         // Load the guid then
