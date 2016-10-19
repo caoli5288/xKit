@@ -1,0 +1,6 @@
+message:
+  receive:
+    successful: "&6成功领取了礼包"
+    failed:
+      permission: "&c你没有权限领取该礼包哦"
+      cooling: "冷却时间剩余%time%秒"

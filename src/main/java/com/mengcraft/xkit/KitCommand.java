@@ -3,6 +3,7 @@ package com.mengcraft.xkit;
 import com.mengcraft.xkit.entity.Kit;
 import com.mengcraft.xkit.entity.KitOrder;
 import com.mengcraft.xkit.util.Cache;
+import com.mengcraft.xkit.util.Messenger;
 import org.bukkit.ChatColor;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
@@ -24,9 +25,11 @@ public class KitCommand implements CommandExecutor {
 
     private final Map<String, Cache<Kit>> cache = new HashMap<>();
     private final Main main;
+    private final Messenger messenger;
 
     public KitCommand(Main main) {
         this.main = main;
+        messenger = new Messenger(main);
     }
 
     @Override
@@ -217,7 +220,7 @@ public class KitCommand implements CommandExecutor {
                 main.process(() -> kit1(p, kit));
             }
         } else {
-            p.sendMessage(ChatColor.RED + "你没有权限领取该礼包哦");
+            messenger.send(p, "receive.failed.permission");
         }
     }
 
@@ -226,7 +229,7 @@ public class KitCommand implements CommandExecutor {
             dispatch(p, kit.getCommand());
         }
         kitItem(p, kit);
-        p.sendMessage(ChatColor.GREEN + "成功领取了礼包");
+        messenger.send(p, "receive.successful");
     }
 
     private void kitItem(Player p, Kit kit) {
@@ -249,7 +252,10 @@ public class KitCommand implements CommandExecutor {
             main.getDatabase().save(KitOrder.of(p, kit));// Store only if have period
         } else {
             int time = order.getTime() + kit.getPeriod() - Main.unixTime();
-            p.sendMessage(ChatColor.RED + "冷却时间剩余" + time + "秒");
+            String str = messenger.find("receive.failed.cooling");
+            p.sendMessage(ChatColor.translateAlternateColorCodes(
+                    '&',
+                    str.replace("%time%", Integer.toString(time))));
         }
         return result;
     }

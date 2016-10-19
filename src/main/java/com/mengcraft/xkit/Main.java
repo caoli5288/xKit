@@ -24,6 +24,8 @@ public class Main extends JavaPlugin implements InventoryHolder {
 
     @Override
     public void onEnable() {
+        saveDefaultConfig();
+
         EbeanHandler db = EbeanManager.DEFAULT.getHandler(this);
         if (db.isNotInitialized()) {
             db.define(Kit.class);
