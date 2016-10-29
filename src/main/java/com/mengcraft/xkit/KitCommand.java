@@ -2,6 +2,7 @@ package com.mengcraft.xkit;
 
 import com.mengcraft.xkit.entity.Kit;
 import com.mengcraft.xkit.entity.KitOrder;
+import com.mengcraft.xkit.event.KitReceivedEvent;
 import com.mengcraft.xkit.util.Cache;
 import com.mengcraft.xkit.util.Messenger;
 import org.bukkit.ChatColor;
@@ -230,6 +231,7 @@ public class KitCommand implements CommandExecutor {
         }
         kitItem(p, kit);
         messenger.send(p, "receive.successful");
+        KitReceivedEvent.call(p, kit);
     }
 
     private void kitItem(Player p, Kit kit) {

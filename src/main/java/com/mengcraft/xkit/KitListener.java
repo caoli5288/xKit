@@ -52,7 +52,7 @@ public class KitListener implements Listener {
             String name = title.substring(5, title.length());
             Kit kit = command.fetch(name, true);
             if (Main.eq(kit, null)) {
-                p.sendMessage(ChatColor.RED + "礼包" + name + "不存在");
+                throw new IllegalStateException("喵喵喵");
             } else {
                 List<String> list = Main.collect(Arrays.asList(inventory.getContents()), item -> {
                     if (!Main.eq(item, null) && item.getTypeId() > 0) {
