@@ -58,7 +58,7 @@ public class KitOrder {
         KitOrder order = new KitOrder();
         order.player = p.getUniqueId();
         order.kitId = kit.getId();
-        order.time = Main.unixTime();
+        order.time = Main.now();
         return order;
     }
 

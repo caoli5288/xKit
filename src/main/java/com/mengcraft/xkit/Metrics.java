@@ -149,10 +149,9 @@ public class Metrics {
      * plotters to their own graphs on the metrics website. Plotters can be
      * added to the graph object returned.
      *
-     * @param name
-     *            The name of the graph
+     * @param name The name of the graph
      * @return Graph object created. Will never return NULL under normal
-     *         circumstances unless bad parameters are given
+     * circumstances unless bad parameters are given
      */
     public Graph createGraph(final String name) {
         if (name == null) {
@@ -173,8 +172,7 @@ public class Metrics {
      * Add a Graph object to BukkitMetrics that represents data for the plugin
      * that should be sent to the backend
      *
-     * @param graph
-     *            The name of the graph
+     * @param graph The name of the graph
      */
     public void addGraph(final Graph graph) {
         if (graph == null) {
@@ -356,8 +354,8 @@ public class Metrics {
         PluginDescriptionFile description = plugin.getDescription();
         String pluginName = description.getName();
         boolean onlineMode = Bukkit.getServer().getOnlineMode(); // TRUE if
-                                                                 // online mode
-                                                                 // is enabled
+        // online mode
+        // is enabled
         String pluginVersion = description.getVersion();
         String serverVersion = Bukkit.getVersion();
         int playersOnline = Bukkit.getServer().getOnlinePlayers().size();
@@ -571,7 +569,7 @@ public class Metrics {
      * @throws UnsupportedEncodingException
      */
     private static void appendJSONPair(StringBuilder json, String key,
-            String value) throws UnsupportedEncodingException {
+                                       String value) throws UnsupportedEncodingException {
         boolean isValueNumeric = false;
 
         try {
@@ -611,31 +609,31 @@ public class Metrics {
             char chr = text.charAt(index);
 
             switch (chr) {
-            case '"':
-            case '\\':
-                builder.append('\\');
-                builder.append(chr);
-                break;
-            case '\b':
-                builder.append("\\b");
-                break;
-            case '\t':
-                builder.append("\\t");
-                break;
-            case '\n':
-                builder.append("\\n");
-                break;
-            case '\r':
-                builder.append("\\r");
-                break;
-            default:
-                if (chr < ' ') {
-                    String t = "000" + Integer.toHexString(chr);
-                    builder.append("\\u" + t.substring(t.length() - 4));
-                } else {
+                case '"':
+                case '\\':
+                    builder.append('\\');
                     builder.append(chr);
-                }
-                break;
+                    break;
+                case '\b':
+                    builder.append("\\b");
+                    break;
+                case '\t':
+                    builder.append("\\t");
+                    break;
+                case '\n':
+                    builder.append("\\n");
+                    break;
+                case '\r':
+                    builder.append("\\r");
+                    break;
+                default:
+                    if (chr < ' ') {
+                        String t = "000" + Integer.toHexString(chr);
+                        builder.append("\\u" + t.substring(t.length() - 4));
+                    } else {
+                        builder.append(chr);
+                    }
+                    break;
             }
         }
         builder.append('"');
@@ -646,8 +644,7 @@ public class Metrics {
     /**
      * Encode text as UTF-8
      *
-     * @param text
-     *            the text to encode
+     * @param text the text to encode
      * @return the encoded text, as UTF-8
      */
     private static String urlEncode(final String text)
@@ -687,8 +684,7 @@ public class Metrics {
         /**
          * Add a plotter to the graph, which will be used to plot entries
          *
-         * @param plotter
-         *            the plotter to add to the graph
+         * @param plotter the plotter to add to the graph
          */
         public void addPlotter(final Plotter plotter) {
             plotters.add(plotter);
@@ -697,8 +693,7 @@ public class Metrics {
         /**
          * Remove a plotter from the graph
          *
-         * @param plotter
-         *            the plotter to remove from the graph
+         * @param plotter the plotter to remove from the graph
          */
         public void removePlotter(final Plotter plotter) {
             plotters.remove(plotter);
@@ -756,9 +751,8 @@ public class Metrics {
         /**
          * Construct a plotter with a specific plot name
          *
-         * @param name
-         *            the name of the plotter to use, which will show up on the
-         *            website
+         * @param name the name of the plotter to use, which will show up on the
+         *             website
          */
         public Plotter(final String name) {
             this.name = name;

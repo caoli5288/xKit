@@ -59,7 +59,7 @@ public class KitCommand implements CommandExecutor {
             return admin(sender, it, () -> add(sender, it.next()));
         } else if (Main.eq(next, "kit")) {
             if (it.hasNext() && sender instanceof Player) {
-                main.execute(() -> {
+                main.exec(() -> {
                     kit(Player.class.cast(sender), it.next());
                 });
                 return true;
@@ -73,7 +73,7 @@ public class KitCommand implements CommandExecutor {
     }
 
     private void all(CommandSender sender) {
-        main.process(() -> main.find(Kit.class).findList(), list -> {
+        main.consume(() -> main.find(Kit.class).findList(), list -> {
             sender.sendMessage(ChatColor.GOLD + "* Kit list");
             list.forEach(kit -> {
                 sender.sendMessage(ChatColor.GOLD + "- " + kit.getName());
@@ -88,7 +88,7 @@ public class KitCommand implements CommandExecutor {
     private boolean admin(CommandSender sender, Iterator<String> it, Runnable runnable) {
         boolean result = it.hasNext() && sender.hasPermission("xkit.admin");
         if (result) {
-            main.execute(runnable);
+            main.exec(runnable);
         } else {
             sendInfo(sender);
         }
@@ -97,7 +97,7 @@ public class KitCommand implements CommandExecutor {
 
     private void del(CommandSender sender, String next) {
         Kit kit = fetch(next, false);
-        if (Main.eq(kit, null)) {
+        if (Main.nil(kit)) {
             sender.sendMessage(ChatColor.RED + "礼包" + next + "不存在");
         } else {
             main.getDatabase().delete(kit);
@@ -108,7 +108,7 @@ public class KitCommand implements CommandExecutor {
 
     private void add(CommandSender p, String name) {
         Kit fetch = fetch(name, false);
-        if (Main.eq(fetch, null)) {
+        if (Main.nil(fetch)) {
             Kit kit = main.getDatabase().createEntityBean(Kit.class);
             kit.setName(name);
             main.getDatabase().save(kit);
@@ -122,13 +122,13 @@ public class KitCommand implements CommandExecutor {
 
     private boolean set(CommandSender sender, String name, Iterator<String> it) {
         Kit kit = fetch(name, true);
-        if (Main.eq(kit, null)) {
+        if (Main.nil(kit)) {
             sender.sendMessage(ChatColor.RED + "礼包" + name + "不存在");
         } else if (it.hasNext()) {
             return set(sender, kit, it);
         } else if (sender instanceof Player) {
             Player p = Player.class.cast(sender);
-            main.process(() -> {
+            main.run(() -> {
                 Inventory pak = main.getInventory(name);
                 if (kit.hasItem()) {
                     pak.setContents(Main.getItemList(kit));
@@ -193,7 +193,7 @@ public class KitCommand implements CommandExecutor {
         }
         String command = builder.toString();
         Object t = JSONValue.parse(command);
-        if (Main.eq(t, null) || !(t instanceof List)) {
+        if (Main.nil(t) || !(t instanceof List)) {
             sender.sendMessage(ChatColor.RED + "命令不符合JSON格式");
         } else {
             kit.setCommand(command);
@@ -206,7 +206,7 @@ public class KitCommand implements CommandExecutor {
 
     private void kit(Player p, String name) {
         Kit kit = fetch(name, true);
-        if (Main.eq(kit, null)) {
+        if (Main.nil(kit)) {
             p.sendMessage(ChatColor.RED + "礼包" + name + "不存在");
         } else if (Main.valid(kit)) {
             kit(p, kit);
@@ -218,7 +218,7 @@ public class KitCommand implements CommandExecutor {
     private void kit(Player p, Kit kit) {
         if (!kit.hasPermission() || p.hasPermission(kit.getPermission())) {
             if (!kit.hasPeriod() || period(p, kit)) {
-                main.process(() -> kit1(p, kit));
+                main.run(() -> kit1(p, kit));
             }
         } else {
             messenger.send(p, "receive.failed.permission");
@@ -247,13 +247,13 @@ public class KitCommand implements CommandExecutor {
                 .where()
                 .eq("player", p.getUniqueId())
                 .eq("kitId", kit.getId())
-                .gt("time", Main.unixTime() - kit.getPeriod())
+                .gt("time", Main.now() - kit.getPeriod())
                 .findUnique();
-        boolean result = Main.eq(order, null);
+        boolean result = Main.nil(order);
         if (result) {
             main.getDatabase().save(KitOrder.of(p, kit));// Store only if have period
         } else {
-            int time = order.getTime() + kit.getPeriod() - Main.unixTime();
+            int time = order.getTime() + kit.getPeriod() - Main.now();
             String str = messenger.find("receive.failed.cooling");
             p.sendMessage(ChatColor.translateAlternateColorCodes(
                     '&',

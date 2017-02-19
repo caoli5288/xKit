@@ -41,21 +41,22 @@ public class KitListener implements Listener {
         if (Main.eq(title, "礼物箱子")) {
             List<ItemStack> list = new ArrayList<>(Main.KIT_SIZE);
             inventory.forEach(item -> {
-                if (!Main.eq(item, null) && item.getTypeId() > 0) list.add(item);
+                if (!Main.nil(item) && item.getTypeId() > 0) list.add(item);
             });
             if (!list.isEmpty()) {
                 Location location = p.getLocation();
                 list.forEach(item -> location.getWorld().dropItem(location, item));
                 p.sendMessage(ChatColor.RED + "未领取的物品已掉落脚下");
             }
+            inventory.clear();
         } else {
             String name = title.substring(5, title.length());
             Kit kit = command.fetch(name, true);
-            if (Main.eq(kit, null)) {
+            if (Main.nil(kit)) {
                 throw new IllegalStateException("喵喵喵");
             } else {
                 List<String> list = Main.collect(Arrays.asList(inventory.getContents()), item -> {
-                    if (!Main.eq(item, null) && item.getTypeId() > 0) {
+                    if (!Main.nil(item) && item.getTypeId() > 0) {
                         return Main.encode(item);
                     }
                     return null;
@@ -66,7 +67,7 @@ public class KitListener implements Listener {
                 } else {
                     kit.setItem(JSONValue.toJSONString(list));
                 }
-                main.execute(kit, main::save);
+                main.exec(kit, main::save);
 
                 p.sendMessage(ChatColor.GREEN + "操作已完成");
             }

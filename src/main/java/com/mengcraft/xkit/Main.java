@@ -39,7 +39,7 @@ public class Main extends JavaPlugin implements InventoryHolder {
         db.install();
         db.reflect();
 
-        execute(() -> new Metrics(this).start());
+        exec(() -> new Metrics(this).start());
 
         KitCommand command = new KitCommand(this);
         getCommand("xkit").setExecutor(command);
@@ -52,7 +52,7 @@ public class Main extends JavaPlugin implements InventoryHolder {
     }
 
     public Inventory getInventory(String name) {
-        if (eq(name, null)) {
+        if (nil(name)) {
             return getServer().createInventory(this, KIT_SIZE, "礼物箱子");
         }
         return getServer().createInventory(this, KIT_SIZE, "管理模式|" + name);
@@ -67,27 +67,27 @@ public class Main extends JavaPlugin implements InventoryHolder {
         getServer().dispatchCommand(getServer().getConsoleSender(), command);
     }
 
-    public <T> void process(Callable<T> callable, Consumer<T> consumer) {
-        execute(() -> {
+    public <T> void consume(Callable<T> callable, Consumer<T> consumer) {
+        exec(() -> {
             try {
                 T result = callable.call();
-                process(() -> consumer.accept(result));
+                run(() -> consumer.accept(result));
             } catch (Exception e) {
                 e.printStackTrace();
             }
         });
     }
 
-    public void process(Runnable runnable) {
+    public void run(Runnable runnable) {
         getServer().getScheduler().runTask(this, runnable);
     }
 
-    public void execute(Runnable runnable) {
+    public void exec(Runnable runnable) {
         getServer().getScheduler().runTaskAsynchronously(this, runnable);
     }
 
-    public <T> void execute(T in, Consumer<T> consumer) {
-        execute(() -> consumer.accept(in));
+    public <T> void exec(T in, Consumer<T> consumer) {
+        exec(() -> consumer.accept(in));
     }
 
     public <T> Query<T> find(Class<T> type) {
@@ -98,8 +98,12 @@ public class Main extends JavaPlugin implements InventoryHolder {
         getDatabase().save(object);
     }
 
-    public static int unixTime() {
+    public static int now() {
         return Math.toIntExact(System.currentTimeMillis() / 1000);
+    }
+
+    public static boolean nil(Object any) {
+        return any == null;
     }
 
     public static boolean eq(Object i, Object j) {
@@ -110,7 +114,7 @@ public class Main extends JavaPlugin implements InventoryHolder {
         List<T> out = new ArrayList<>(in.size());
         for (E i : in) {
             T ref = func.apply(i);
-            if (!eq(ref, null)) {
+            if (!nil(ref)) {
                 out.add(ref);
             }
         }
