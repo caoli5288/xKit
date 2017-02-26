@@ -165,7 +165,7 @@ public class KitCommand implements CommandExecutor {
         } else if (Main.eq(next, "period")) {
             if (it.hasNext()) {
                 int period = Integer.parseInt(it.next());
-                if (period < 1) {
+                if (period < 0) {
                     period = 0;
                 }
                 kit.setPeriod(period);
@@ -298,7 +298,7 @@ public class KitCommand implements CommandExecutor {
                 p.sendMessage(ChatColor.RED + "/xkit set <kit_name>");
             }
             p.sendMessage(ChatColor.RED + "/xkit set <kit_name> permission [permission]");
-            p.sendMessage(ChatColor.RED + "/xkit set <kit_name> period [period_time]");
+            p.sendMessage(ChatColor.RED + "/xkit set <kit_name> period [period_second]");
             p.sendMessage(ChatColor.RED + "/xkit set <kit_name> command [command]...");
         }
         p.sendMessage(ChatColor.RED + "/xkit kit <kit_name>");

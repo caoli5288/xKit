@@ -114,7 +114,7 @@ public class Main extends JavaPlugin implements InventoryHolder {
         List<T> out = new ArrayList<>(in.size());
         for (E i : in) {
             T ref = func.apply(i);
-            if (!nil(ref)) {
+            if (!nil(ref)) {// Extra not null check
                 out.add(ref);
             }
         }
