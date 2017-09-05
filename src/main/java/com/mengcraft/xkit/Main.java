@@ -1,5 +1,6 @@
 package com.mengcraft.xkit;
 
+import com.avaje.ebean.EbeanServer;
 import com.avaje.ebean.Query;
 import com.comphenix.protocol.utility.StreamSerializer;
 import com.mengcraft.simpleorm.DatabaseException;
@@ -22,6 +23,9 @@ import java.util.function.Function;
 
 public class Main extends JavaPlugin implements InventoryHolder {
 
+
+    private static EbeanServer pool;
+
     @Override
     public void onEnable() {
         saveDefaultConfig();
@@ -37,7 +41,8 @@ public class Main extends JavaPlugin implements InventoryHolder {
             }
         }
         db.install();
-        db.reflect();
+//        db.reflect();
+        pool = db.getServer();
 
         exec(() -> new Metrics(this).start());
 
@@ -56,6 +61,10 @@ public class Main extends JavaPlugin implements InventoryHolder {
             return getServer().createInventory(this, KIT_SIZE, "礼物箱子");
         }
         return getServer().createInventory(this, KIT_SIZE, "管理模式|" + name);
+    }
+
+    public static EbeanServer getPool() {
+        return pool;
     }
 
     @Override
@@ -91,11 +100,11 @@ public class Main extends JavaPlugin implements InventoryHolder {
     }
 
     public <T> Query<T> find(Class<T> type) {
-        return getDatabase().find(type);
+        return pool.find(type);
     }
 
     public void save(Object object) {
-        getDatabase().save(object);
+        pool.save(object);
     }
 
     public static int now() {
@@ -145,13 +154,10 @@ public class Main extends JavaPlugin implements InventoryHolder {
 
     public static ItemStack[] getItemList(Kit kit) {
         List<String> list = List.class.cast(JSONValue.parse(kit.getItem()));
-        List<ItemStack> i = Main.collect(list, text -> {
-            return Main.decode(text);
-        });
+        List<ItemStack> i = Main.collect(list, text -> Main.decode(text));
         return i.toArray(new ItemStack[Main.KIT_SIZE]);
     }
 
     public static final StreamSerializer SERIALIZER = new StreamSerializer();
     public static final int KIT_SIZE = 54;
-
 }

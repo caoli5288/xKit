@@ -100,7 +100,7 @@ public class KitCommand implements CommandExecutor {
         if (Main.nil(kit)) {
             sender.sendMessage(ChatColor.RED + "礼包" + next + "不存在");
         } else {
-            main.getDatabase().delete(kit);
+            Main.getPool().delete(kit);
             cache.remove(next);
             sender.sendMessage(ChatColor.GREEN + "礼包" + next + "已删除成功");
         }
@@ -109,10 +109,10 @@ public class KitCommand implements CommandExecutor {
     private void add(CommandSender p, String name) {
         Kit fetch = fetch(name, false);
         if (Main.nil(fetch)) {
-            Kit kit = main.getDatabase().createEntityBean(Kit.class);
+            Kit kit = Main.getPool().createEntityBean(Kit.class);
             kit.setName(name);
-            main.getDatabase().save(kit);
-            cache.put(name, new Cache<Kit>(() -> update(kit.getId()), 300000));
+            main.save(kit);
+            cache.put(name, new Cache<Kit>(() -> find(kit.getId()), 300000));
 
             p.sendMessage(ChatColor.GREEN + "礼包" + name + "已定义成功");
         } else {
@@ -147,18 +147,18 @@ public class KitCommand implements CommandExecutor {
                 return setCommand(sender, it, kit);
             } else {
                 kit.setCommand(null);
-                main.getDatabase().save(kit);
+                main.save(kit);
                 sender.sendMessage(ChatColor.GREEN + "命令已删除");
             }
             return true;
         } else if (Main.eq(next, "permission")) {
             if (it.hasNext()) {
                 kit.setPermission(it.next());
-                main.getDatabase().save(kit);
+                main.save(kit);
                 sender.sendMessage(ChatColor.GREEN + "权限已设置");
             } else {
                 kit.setPermission(null);
-                main.getDatabase().save(kit);
+                main.save(kit);
                 sender.sendMessage(ChatColor.GREEN + "权限已删除");
             }
             return true;
@@ -169,11 +169,11 @@ public class KitCommand implements CommandExecutor {
                     period = 0;
                 }
                 kit.setPeriod(period);
-                main.getDatabase().save(kit);
+                main.save(kit);
                 sender.sendMessage(ChatColor.GREEN + "冷却已设置");
             } else {
                 kit.setPeriod(0);
-                main.getDatabase().save(kit);
+                main.save(kit);
                 sender.sendMessage(ChatColor.GREEN + "冷却已取消");
             }
             return true;
@@ -197,7 +197,7 @@ public class KitCommand implements CommandExecutor {
             sender.sendMessage(ChatColor.RED + "命令不符合JSON格式");
         } else {
             kit.setCommand(command);
-            main.getDatabase().save(kit);
+            main.save(kit);
             sender.sendMessage(ChatColor.GREEN + "命令已设置");
             return true;
         }
@@ -251,7 +251,7 @@ public class KitCommand implements CommandExecutor {
                 .findUnique();
         boolean result = Main.nil(order);
         if (result) {
-            main.getDatabase().save(KitOrder.of(p, kit));// Store only if have period
+            main.save(KitOrder.of(p, kit));// Store only if have period
         } else {
             int time = order.getTime() + kit.getPeriod() - Main.now();
             String str = messenger.find("receive.failed.cooling");
@@ -278,15 +278,15 @@ public class KitCommand implements CommandExecutor {
                     .eq("name", name)
                     .findUnique();
             if (kit != null) {
-                cache.put(name, new Cache<>(() -> update(kit.getId()), 300000));
+                cache.put(name, new Cache<>(() -> find(kit.getId()), 300000));
             }
             return kit;
         }
         return cached.get(update);
     }
 
-    private Kit update(int id) {
-        return main.getDatabase().find(Kit.class, id);
+    private Kit find(int id) {
+        return Main.getPool().find(Kit.class, id);
     }
 
     private void sendInfo(CommandSender p) {
