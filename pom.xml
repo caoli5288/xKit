@@ -9,13 +9,13 @@
         <dependency>
             <groupId>org.spigotmc</groupId>
             <artifactId>spigot-api</artifactId>
-            <version>1.8.8-R0.1-SNAPSHOT</version>
+            <version>1.12.2-R0.1-SNAPSHOT</version>
             <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>com.mengcraft</groupId>
             <artifactId>simpleorm</artifactId>
-            <version>0.3.3</version>
+            <version>0.7</version>
             <scope>provided</scope>
         </dependency>
         <dependency>
