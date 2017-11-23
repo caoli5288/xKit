@@ -3,8 +3,6 @@ package com.mengcraft.xkit;
 import com.mengcraft.xkit.entity.Kit;
 import com.mengcraft.xkit.entity.KitOrder;
 import com.mengcraft.xkit.event.KitReceivedEvent;
-import com.mengcraft.xkit.util.Cache;
-import com.mengcraft.xkit.util.Messenger;
 import org.bukkit.ChatColor;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
@@ -14,23 +12,20 @@ import org.bukkit.inventory.Inventory;
 import org.json.simple.JSONValue;
 
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
+
+import static com.mengcraft.xkit.Main.nil;
 
 /**
  * Created on 16-9-23.
  */
 public class KitCommand implements CommandExecutor {
 
-    private final Map<String, Cache<Kit>> cache = new HashMap<>();
     private final Main main;
-    private final Messenger messenger;
 
-    public KitCommand(Main main) {
+    KitCommand(Main main) {
         this.main = main;
-        messenger = new Messenger(main);
     }
 
     @Override
@@ -59,9 +54,7 @@ public class KitCommand implements CommandExecutor {
             return admin(sender, it, () -> add(sender, it.next()));
         } else if (Main.eq(next, "kit")) {
             if (it.hasNext() && sender instanceof Player) {
-                main.exec(() -> {
-                    kit(Player.class.cast(sender), it.next());
-                });
+                main.exec(() -> kit(Player.class.cast(sender), it.next()));
                 return true;
             } else {
                 sendInfo(sender);
@@ -79,7 +72,7 @@ public class KitCommand implements CommandExecutor {
                 sender.sendMessage(ChatColor.GOLD + "- " + kit.getName());
                 sender.sendMessage(ChatColor.GOLD + "  - permission " + kit.getPermission());
                 sender.sendMessage(ChatColor.GOLD + "  - period " + kit.getPeriod());
-                sender.sendMessage(ChatColor.GOLD + "  - item " + (kit.hasItem() ? "some" : "null"));
+                sender.sendMessage(ChatColor.GOLD + "  - item " + (nil(kit.getItem()) ? "some" : "null"));
                 sender.sendMessage(ChatColor.GOLD + "  - command " + kit.getCommand());
             });
         });
@@ -97,23 +90,21 @@ public class KitCommand implements CommandExecutor {
 
     private void del(CommandSender sender, String next) {
         Kit kit = fetch(next, false);
-        if (Main.nil(kit)) {
+        if (nil(kit)) {
             sender.sendMessage(ChatColor.RED + "礼包" + next + "不存在");
         } else {
             Main.getPool().delete(kit);
-            cache.remove(next);
+            L2Pool.expire(kit);
             sender.sendMessage(ChatColor.GREEN + "礼包" + next + "已删除成功");
         }
     }
 
     private void add(CommandSender p, String name) {
         Kit fetch = fetch(name, false);
-        if (Main.nil(fetch)) {
+        if (nil(fetch)) {
             Kit kit = Main.getPool().createEntityBean(Kit.class);
             kit.setName(name);
             main.save(kit);
-            cache.put(name, new Cache<Kit>(() -> find(kit.getId()), 300000));
-
             p.sendMessage(ChatColor.GREEN + "礼包" + name + "已定义成功");
         } else {
             p.sendMessage(ChatColor.RED + "礼包" + name + "已经被定义");
@@ -122,7 +113,7 @@ public class KitCommand implements CommandExecutor {
 
     private boolean set(CommandSender sender, String name, Iterator<String> it) {
         Kit kit = fetch(name, true);
-        if (Main.nil(kit)) {
+        if (nil(kit)) {
             sender.sendMessage(ChatColor.RED + "礼包" + name + "不存在");
         } else if (it.hasNext()) {
             return set(sender, kit, it);
@@ -130,8 +121,8 @@ public class KitCommand implements CommandExecutor {
             Player p = Player.class.cast(sender);
             main.run(() -> {
                 Inventory pak = main.getInventory(name);
-                if (kit.hasItem()) {
-                    pak.setContents(Main.getItemList(kit));
+                if (!nil(kit.getItem())) {
+                    pak.setContents(Main.itemListFrom(kit));
                 }
                 p.openInventory(pak);
             });
@@ -193,7 +184,7 @@ public class KitCommand implements CommandExecutor {
         }
         String command = builder.toString();
         Object t = JSONValue.parse(command);
-        if (Main.nil(t) || !(t instanceof List)) {
+        if (nil(t) || !(t instanceof List)) {
             sender.sendMessage(ChatColor.RED + "命令不符合JSON格式");
         } else {
             kit.setCommand(command);
@@ -206,7 +197,7 @@ public class KitCommand implements CommandExecutor {
 
     private void kit(Player p, String name) {
         Kit kit = fetch(name, true);
-        if (Main.nil(kit)) {
+        if (nil(kit)) {
             p.sendMessage(ChatColor.RED + "礼包" + name + "不存在");
         } else if (Main.valid(kit)) {
             kit(p, kit);
@@ -216,50 +207,54 @@ public class KitCommand implements CommandExecutor {
     }
 
     private void kit(Player p, Kit kit) {
-        if (!kit.hasPermission() || p.hasPermission(kit.getPermission())) {
-            if (!kit.hasPeriod() || period(p, kit)) {
-                main.run(() -> kit1(p, kit));
-            }
-        } else {
-            messenger.send(p, "receive.failed.permission");
+        if (!(nil(kit.getPermission()) || p.hasPermission(kit.getPermission()))) {
+            Main.getMessenger().send(p, "receive.failed.permission");
+            return;
         }
+
+        if (kit.getPeriod() == 0) {
+            kitOrder(p, kit);
+            return;
+        }
+
+        KitOrder order = L2Pool.orderBy(p, kit);
+        if (nil(order)) {
+            kitOrder(p, kit);
+            return;
+        }
+
+        long next = order.getTime() + kit.getPeriod() - Main.now();
+        if (next < 1) {
+            kitOrder(p, kit);
+            return;
+        }
+
+        String str = Main.getMessenger().find("receive.failed.cooling");
+        p.sendMessage(str.replace("%time%", String.valueOf(next)).replace('&', ChatColor.COLOR_CHAR));
+    }
+
+    private void kitOrder(Player p, Kit kit) {
+        KitOrder kitOrder = KitOrder.of(p, kit);
+        L2Pool.put(kitOrder);
+        main.save(kitOrder);
+        main.run(() -> kit1(p, kit));
     }
 
     private void kit1(Player p, Kit kit) {
-        if (kit.hasCommand()) {
+        if (!nil(kit.getCommand())) {
             dispatch(p, kit.getCommand());
         }
         kitItem(p, kit);
-        messenger.send(p, "receive.successful");
+        Main.getMessenger().send(p, "receive.successful");
         KitReceivedEvent.call(p, kit);
     }
 
     private void kitItem(Player p, Kit kit) {
-        if (kit.hasItem()) {// may null
+        if (nil(kit.getItem())) {// may null
             Inventory pak = main.getInventory();
-            pak.setContents(Main.getItemList(kit));
+            pak.setContents(Main.itemListFrom(kit));
             p.openInventory(pak);
         }
-    }
-
-    private boolean period(Player p, Kit kit) {
-        KitOrder order = main.find(KitOrder.class)
-                .where()
-                .eq("player", p.getUniqueId())
-                .eq("kitId", kit.getId())
-                .gt("time", Main.now() - kit.getPeriod())
-                .findUnique();
-        boolean result = Main.nil(order);
-        if (result) {
-            main.save(KitOrder.of(p, kit));// Store only if have period
-        } else {
-            int time = order.getTime() + kit.getPeriod() - Main.now();
-            String str = messenger.find("receive.failed.cooling");
-            p.sendMessage(ChatColor.translateAlternateColorCodes(
-                    '&',
-                    str.replace("%time%", Integer.toString(time))));
-        }
-        return result;
     }
 
     @SuppressWarnings("unchecked")
@@ -270,23 +265,11 @@ public class KitCommand implements CommandExecutor {
         }
     }
 
-    public Kit fetch(String name, boolean update) {
-        Cache<Kit> cached = cache.get(name);
-        if (cached == null) {
-            Kit kit = main.find(Kit.class)
-                    .where()
-                    .eq("name", name)
-                    .findUnique();
-            if (kit != null) {
-                cache.put(name, new Cache<>(() -> find(kit.getId()), 300000));
-            }
-            return kit;
+    Kit fetch(String name, boolean update) {
+        if (update) {
+            L2Pool.expire("kit:name:" + name);
         }
-        return cached.get(update);
-    }
-
-    private Kit find(int id) {
-        return Main.getPool().find(Kit.class, id);
+        return L2Pool.kitByName(name);
     }
 
     private void sendInfo(CommandSender p) {

@@ -8,6 +8,8 @@ import com.mengcraft.simpleorm.EbeanHandler;
 import com.mengcraft.simpleorm.EbeanManager;
 import com.mengcraft.xkit.entity.Kit;
 import com.mengcraft.xkit.entity.KitOrder;
+import com.mengcraft.xkit.util.Messenger;
+import org.bukkit.Bukkit;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.InventoryHolder;
 import org.bukkit.inventory.ItemStack;
@@ -15,6 +17,7 @@ import org.bukkit.plugin.java.JavaPlugin;
 import org.json.simple.JSONValue;
 
 import java.io.IOException;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Callable;
@@ -25,6 +28,7 @@ public class Main extends JavaPlugin implements InventoryHolder {
 
 
     private static EbeanServer pool;
+    private static Messenger messenger;
 
     @Override
     public void onEnable() {
@@ -43,13 +47,23 @@ public class Main extends JavaPlugin implements InventoryHolder {
         db.install();
 //        db.reflect();
         pool = db.getServer();
+        messenger = new Messenger(this);
 
         exec(() -> new Metrics(this).start());
 
         KitCommand command = new KitCommand(this);
         getCommand("xkit").setExecutor(command);
 
+        if (Bukkit.getPluginManager().isPluginEnabled("PlaceholderAPI")) {
+            KitPlaceholderHook hook = new KitPlaceholderHook(this);
+            hook.hook();
+        }
+
         getServer().getPluginManager().registerEvents(new KitListener(this, command), this);
+    }
+
+    public static Messenger getMessenger() {
+        return messenger;
     }
 
     public static boolean isKitView(Inventory inventory) {
@@ -107,8 +121,8 @@ public class Main extends JavaPlugin implements InventoryHolder {
         pool.save(object);
     }
 
-    public static int now() {
-        return Math.toIntExact(System.currentTimeMillis() / 1000);
+    public static long now() {
+        return Instant.now().getEpochSecond();
     }
 
     public static boolean nil(Object any) {
@@ -149,10 +163,10 @@ public class Main extends JavaPlugin implements InventoryHolder {
     }
 
     public static boolean valid(Kit kit) {
-        return kit.hasItem() || kit.hasCommand();
+        return !(nil(kit.getItem()) && nil(kit.getCommand()));
     }
 
-    public static ItemStack[] getItemList(Kit kit) {
+    public static ItemStack[] itemListFrom(Kit kit) {
         List<String> list = List.class.cast(JSONValue.parse(kit.getItem()));
         List<ItemStack> i = Main.collect(list, text -> Main.decode(text));
         return i.toArray(new ItemStack[Main.KIT_SIZE]);

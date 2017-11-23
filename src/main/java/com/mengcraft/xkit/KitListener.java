@@ -7,12 +7,14 @@ import org.bukkit.entity.HumanEntity;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.inventory.InventoryCloseEvent;
+import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.json.simple.JSONValue;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
 
 /**
@@ -36,6 +38,11 @@ public class KitListener implements Listener {
         }
     }
 
+    @EventHandler
+    public void handle(PlayerQuitEvent event) {
+        L2Pool.expire(event.getPlayer());
+    }
+
     private void kit(HumanEntity p, Inventory inventory) {
         String title = inventory.getTitle();
         if (Main.eq(title, "礼物箱子")) {
@@ -44,9 +51,12 @@ public class KitListener implements Listener {
                 if (!Main.nil(item) && item.getTypeId() > 0) list.add(item);
             });
             if (!list.isEmpty()) {
-                Location location = p.getLocation();
-                list.forEach(item -> location.getWorld().dropItem(location, item));
-                p.sendMessage(ChatColor.RED + "未领取的物品已掉落脚下");
+                Collection<ItemStack> overflow = p.getInventory().addItem(list.toArray(new ItemStack[list.size()])).values();
+                if (!overflow.isEmpty()) {
+                    Location location = p.getLocation();
+                    list.forEach(item -> location.getWorld().dropItem(location, item));
+                    Main.getMessenger().send(p, "item_overflow", ChatColor.RED + "未领取的物品已掉落脚下");
+                }
             }
             inventory.clear();
         } else {

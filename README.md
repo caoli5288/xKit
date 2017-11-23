@@ -1,5 +1,7 @@
 # xKit [![Build Status](http://ci.mengcraft.com:8080/job/xKit/badge/icon)](http://ci.mengcraft.com:8080/job/xKit/)
-A kit manager for bukkit based minecraft server.
+A kit manager for bukkit based minecraft server. Release under GPLv2.
+
+## 指令
 - /xkit all
   - 检视所有已定义的礼包
 - /xkit add <kit_name>
@@ -18,3 +20,12 @@ A kit manager for bukkit based minecraft server.
 - /xkit set <kit_name> permission \[permission]
   - 设置领取所需权限
 - /xkit kit <kit_name>
+
+## Placeholder
+- xkit_<kit_name>_okay
+  - return true if player's <kit_name> not in cooling time. Other wise false.
+- xkit_<kit_name>_next
+  - return cooling time remained by second. Or -1 if not in cooling time.
+- xkit_<kit_name>_nextdate
+  - return cooling time ending date. Or null if not in cooling time.
+  - return null if named kit not exist.

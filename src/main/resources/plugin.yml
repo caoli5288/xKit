@@ -16,3 +16,4 @@ permissions:
     default: true
 
 depend: [ProtocolLib, SimpleORM]
+softdepend: ['PlaceholderAPI']
