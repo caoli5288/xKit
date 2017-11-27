@@ -250,7 +250,7 @@ public class KitCommand implements CommandExecutor {
     }
 
     private void kitItem(Player p, Kit kit) {
-        if (nil(kit.getItem())) {// may null
+        if (!nil(kit.getItem())) {// may null
             Inventory pak = main.getInventory();
             pak.setContents(Main.itemListFrom(kit));
             p.openInventory(pak);
