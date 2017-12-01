@@ -12,6 +12,8 @@ A kit manager for bukkit based minecraft server. Release under GPLv2.
   - 设置礼包内含物品
 - /xkit set <kit_name> period \[period_time]
   - 设置礼包领取间隔（秒）
+- /xkit set <kit_name> day \[period_day]
+  - 设置礼包领取间隔（天）
 - /xkit set <kit_name> command \[command]...
   - 设置领取同时后台执行命令
   - 格式为JSON数组

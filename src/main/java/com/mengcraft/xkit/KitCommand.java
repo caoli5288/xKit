@@ -11,6 +11,10 @@ import org.bukkit.entity.Player;
 import org.bukkit.inventory.Inventory;
 import org.json.simple.JSONValue;
 
+import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.temporal.ChronoUnit;
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
@@ -72,6 +76,7 @@ public class KitCommand implements CommandExecutor {
                 sender.sendMessage(ChatColor.GOLD + "- " + kit.getName());
                 sender.sendMessage(ChatColor.GOLD + "  - permission " + kit.getPermission());
                 sender.sendMessage(ChatColor.GOLD + "  - period " + kit.getPeriod());
+                sender.sendMessage(ChatColor.GOLD + "  - day " + kit.getDay());
                 sender.sendMessage(ChatColor.GOLD + "  - item " + (nil(kit.getItem()) ? "some" : "null"));
                 sender.sendMessage(ChatColor.GOLD + "  - command " + kit.getCommand());
             });
@@ -155,11 +160,33 @@ public class KitCommand implements CommandExecutor {
             return true;
         } else if (Main.eq(next, "period")) {
             if (it.hasNext()) {
+                int day = kit.getDay();
+                if (day > 0) {
+                    sender.sendMessage(ChatColor.RED + "与天数设置冲突");
+                    return false;
+                }
                 int period = Integer.parseInt(it.next());
                 if (period < 0) {
                     period = 0;
                 }
                 kit.setPeriod(period);
+                main.save(kit);
+                sender.sendMessage(ChatColor.GREEN + "冷却已设置");
+            } else {
+                kit.setPeriod(0);
+                main.save(kit);
+                sender.sendMessage(ChatColor.GREEN + "冷却已取消");
+            }
+            return true;
+        } else if (Main.eq(next, "day")) {
+            if (it.hasNext()) {
+                int period = kit.getPeriod();
+                if (period > 0) {
+                    sender.sendMessage(ChatColor.RED + "与周期设置冲突");
+                    return false;
+                }
+                int day = Integer.parseInt(it.next());
+                kit.setDay(Math.max(0, day));
                 main.save(kit);
                 sender.sendMessage(ChatColor.GREEN + "冷却已设置");
             } else {
@@ -212,7 +239,7 @@ public class KitCommand implements CommandExecutor {
             return;
         }
 
-        if (kit.getPeriod() == 0) {
+        if (kit.getPeriod() == 0 && kit.getDay() == 0) {
             kitOrder(p, kit);
             return;
         }
@@ -223,14 +250,24 @@ public class KitCommand implements CommandExecutor {
             return;
         }
 
-        long next = order.getTime() + kit.getPeriod() - Main.now();
-        if (next < 1) {
+        long next = nextKit(kit, order);
+        if (!(next > 0)) {
             kitOrder(p, kit);
             return;
         }
 
         String str = Main.getMessenger().find("receive.failed.cooling");
         p.sendMessage(str.replace("%time%", String.valueOf(next)).replace('&', ChatColor.COLOR_CHAR));
+    }
+
+    public static long nextKit(Kit kit, KitOrder order) {
+        int period = kit.getPeriod();
+        if (period > 0) {
+            return order.getTime() + kit.getPeriod() - Main.now();
+        }
+        int day = kit.getDay();
+        Instant next = Instant.ofEpochSecond(order.getTime()).plus(day, ChronoUnit.DAYS);
+        return LocalDateTime.ofInstant(next, ZoneId.systemDefault()).toLocalDate().atStartOfDay().atZone(ZoneId.systemDefault()).toEpochSecond() - Main.now();
     }
 
     private void kitOrder(Player p, Kit kit) {
@@ -282,6 +319,7 @@ public class KitCommand implements CommandExecutor {
             }
             p.sendMessage(ChatColor.RED + "/xkit set <kit_name> permission [permission]");
             p.sendMessage(ChatColor.RED + "/xkit set <kit_name> period [period_second]");
+            p.sendMessage(ChatColor.RED + "/xkit set <kit_name> day [period_day]");
             p.sendMessage(ChatColor.RED + "/xkit set <kit_name> command [command]...");
         }
         p.sendMessage(ChatColor.RED + "/xkit kit <kit_name>");

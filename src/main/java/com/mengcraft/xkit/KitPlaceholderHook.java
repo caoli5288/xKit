@@ -38,7 +38,7 @@ public class KitPlaceholderHook extends EZPlaceholderHook {
                 return "-1";
             }
 
-            long next = order.getTime() + kit.getPeriod() - Main.now();
+            long next = KitCommand.nextKit(kit, order);
             if (next < 1) {
                 return "-1";
             }
@@ -52,11 +52,12 @@ public class KitPlaceholderHook extends EZPlaceholderHook {
                 return "null";
             }
 
-            if (order.getTime() + kit.getPeriod() - Main.now() < 1) {
+            long next = KitCommand.nextKit(kit, order);
+            if (!(next > 0)) {
                 return "null";
             }
 
-            Instant instant = Instant.ofEpochSecond(order.getTime()).plusSeconds(kit.getPeriod());
+            Instant instant = Instant.ofEpochSecond(next);
             LocalDateTime i = LocalDateTime.ofInstant(instant, ZoneId.systemDefault());
 
             return i.getYear() + "年" + i.getMonthValue() + "月" + i.getDayOfMonth() + "日 " + i.getHour() + "点" + i.getMinute() + "分" + i.getSecond() + "秒";
