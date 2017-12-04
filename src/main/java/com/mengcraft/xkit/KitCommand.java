@@ -244,7 +244,7 @@ public class KitCommand implements CommandExecutor {
     }
 
     private void kit(Player p, Kit kit) {
-        if (!(nil(kit.getPermission()) || p.hasPermission(kit.getPermission()))) {
+        if (!nil(kit.getPermission()) && !kit.getPermission().isEmpty() && !p.hasPermission(kit.getPermission())) {
             Main.getMessenger().send(p, "receive.failed.permission");
             return;
         }
@@ -278,7 +278,7 @@ public class KitCommand implements CommandExecutor {
     }
 
     private void kit1(Player p, Kit kit) {
-        if (!nil(kit.getCommand())) {
+        if (!nil(kit.getCommand()) && !kit.getCommand().isEmpty()) {
             dispatch(p, kit.getCommand());
         }
         kitItem(p, kit);
@@ -287,7 +287,7 @@ public class KitCommand implements CommandExecutor {
     }
 
     private void kitItem(Player p, Kit kit) {
-        if (!nil(kit.getItem())) {// may null
+        if (!nil(kit.getItem()) && !kit.getItem().isEmpty()) {// may null
             Inventory pak = main.getInventory();
             pak.setContents(Main.itemListFrom(kit));
             p.openInventory(pak);
@@ -296,7 +296,7 @@ public class KitCommand implements CommandExecutor {
 
     @SuppressWarnings("unchecked")
     private void dispatch(Player p, String command) {
-        List<String> list = List.class.cast(JSONValue.parse(command));
+        List<String> list = (List<String>) JSONValue.parse(command);
         for (String line : list) {
             main.dispatch(line.replace("%player%", p.getName()));
         }
