@@ -44,7 +44,7 @@ public class Main extends JavaPlugin implements InventoryHolder {
                 throw new RuntimeException("db");
             }
         }
-        db.install();
+        db.install(true);
 //        db.reflect();
         pool = db.getServer();
         messenger = new Messenger(this);

@@ -22,7 +22,7 @@ public class Kit {
     private String name;
 
     private int period;
-    private int day;
+    private int next;
     private String permission;
 
     @Column(columnDefinition = "LONGTEXT")

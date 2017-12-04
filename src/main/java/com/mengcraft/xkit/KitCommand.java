@@ -69,18 +69,14 @@ public class KitCommand implements CommandExecutor {
         return false;
     }
 
-    private void all(CommandSender sender) {
-        main.consume(() -> main.find(Kit.class).findList(), list -> {
-            sender.sendMessage(ChatColor.GOLD + "* Kit list");
-            list.forEach(kit -> {
-                sender.sendMessage(ChatColor.GOLD + "- " + kit.getName());
-                sender.sendMessage(ChatColor.GOLD + "  - permission " + kit.getPermission());
-                sender.sendMessage(ChatColor.GOLD + "  - period " + kit.getPeriod());
-                sender.sendMessage(ChatColor.GOLD + "  - day " + kit.getDay());
-                sender.sendMessage(ChatColor.GOLD + "  - item " + (nil(kit.getItem()) ? "some" : "null"));
-                sender.sendMessage(ChatColor.GOLD + "  - command " + kit.getCommand());
-            });
-        });
+    public static long nextKit(Kit kit, KitOrder order) {
+        int period = kit.getPeriod();
+        if (period > 0) {
+            return order.getTime() + kit.getPeriod() - Main.now();
+        }
+        int day = kit.getNext();
+        Instant next = Instant.ofEpochSecond(order.getTime()).plus(day, ChronoUnit.DAYS);
+        return LocalDateTime.ofInstant(next, ZoneId.systemDefault()).toLocalDate().atStartOfDay().atZone(ZoneId.systemDefault()).toEpochSecond() - Main.now();
     }
 
     private boolean admin(CommandSender sender, Iterator<String> it, Runnable runnable) {
@@ -136,69 +132,18 @@ public class KitCommand implements CommandExecutor {
         return false;
     }
 
-    private boolean set(CommandSender sender, Kit kit, Iterator<String> it) {
-        String next = it.next();
-        if (Main.eq(next, "command")) {
-            if (it.hasNext()) {
-                return setCommand(sender, it, kit);
-            } else {
-                kit.setCommand(null);
-                main.save(kit);
-                sender.sendMessage(ChatColor.GREEN + "命令已删除");
-            }
-            return true;
-        } else if (Main.eq(next, "permission")) {
-            if (it.hasNext()) {
-                kit.setPermission(it.next());
-                main.save(kit);
-                sender.sendMessage(ChatColor.GREEN + "权限已设置");
-            } else {
-                kit.setPermission(null);
-                main.save(kit);
-                sender.sendMessage(ChatColor.GREEN + "权限已删除");
-            }
-            return true;
-        } else if (Main.eq(next, "period")) {
-            if (it.hasNext()) {
-                int day = kit.getDay();
-                if (day > 0) {
-                    sender.sendMessage(ChatColor.RED + "与天数设置冲突");
-                    return false;
-                }
-                int period = Integer.parseInt(it.next());
-                if (period < 0) {
-                    period = 0;
-                }
-                kit.setPeriod(period);
-                main.save(kit);
-                sender.sendMessage(ChatColor.GREEN + "冷却已设置");
-            } else {
-                kit.setPeriod(0);
-                main.save(kit);
-                sender.sendMessage(ChatColor.GREEN + "冷却已取消");
-            }
-            return true;
-        } else if (Main.eq(next, "day")) {
-            if (it.hasNext()) {
-                int period = kit.getPeriod();
-                if (period > 0) {
-                    sender.sendMessage(ChatColor.RED + "与周期设置冲突");
-                    return false;
-                }
-                int day = Integer.parseInt(it.next());
-                kit.setDay(Math.max(0, day));
-                main.save(kit);
-                sender.sendMessage(ChatColor.GREEN + "冷却已设置");
-            } else {
-                kit.setPeriod(0);
-                main.save(kit);
-                sender.sendMessage(ChatColor.GREEN + "冷却已取消");
-            }
-            return true;
-        } else {
-            sendInfo(sender);
-        }
-        return false;
+    private void all(CommandSender sender) {
+        main.consume(() -> main.find(Kit.class).findList(), list -> {
+            sender.sendMessage(ChatColor.GOLD + "* Kit list");
+            list.forEach(kit -> {
+                sender.sendMessage(ChatColor.GOLD + "- " + kit.getName());
+                sender.sendMessage(ChatColor.GOLD + "  - permission " + kit.getPermission());
+                sender.sendMessage(ChatColor.GOLD + "  - period " + kit.getPeriod());
+                sender.sendMessage(ChatColor.GOLD + "  - day " + kit.getNext());
+                sender.sendMessage(ChatColor.GOLD + "  - item " + (nil(kit.getItem()) ? "some" : "null"));
+                sender.sendMessage(ChatColor.GOLD + "  - command " + kit.getCommand());
+            });
+        });
     }
 
     private boolean setCommand(CommandSender sender, Iterator<String> it, Kit kit) {
@@ -233,13 +178,78 @@ public class KitCommand implements CommandExecutor {
         }
     }
 
+    private boolean set(CommandSender sender, Kit kit, Iterator<String> it) {
+        String next = it.next();
+        if (Main.eq(next, "command")) {
+            if (it.hasNext()) {
+                return setCommand(sender, it, kit);
+            } else {
+                kit.setCommand(null);
+                main.save(kit);
+                sender.sendMessage(ChatColor.GREEN + "命令已删除");
+            }
+            return true;
+        } else if (Main.eq(next, "permission")) {
+            if (it.hasNext()) {
+                kit.setPermission(it.next());
+                main.save(kit);
+                sender.sendMessage(ChatColor.GREEN + "权限已设置");
+            } else {
+                kit.setPermission(null);
+                main.save(kit);
+                sender.sendMessage(ChatColor.GREEN + "权限已删除");
+            }
+            return true;
+        } else if (Main.eq(next, "period")) {
+            if (it.hasNext()) {
+                int day = kit.getNext();
+                if (day > 0) {
+                    sender.sendMessage(ChatColor.RED + "与天数设置冲突");
+                    return false;
+                }
+                int period = Integer.parseInt(it.next());
+                if (period < 0) {
+                    period = 0;
+                }
+                kit.setPeriod(period);
+                main.save(kit);
+                sender.sendMessage(ChatColor.GREEN + "冷却已设置");
+            } else {
+                kit.setPeriod(0);
+                main.save(kit);
+                sender.sendMessage(ChatColor.GREEN + "冷却已取消");
+            }
+            return true;
+        } else if (Main.eq(next, "day")) {
+            if (it.hasNext()) {
+                int period = kit.getPeriod();
+                if (period > 0) {
+                    sender.sendMessage(ChatColor.RED + "与周期设置冲突");
+                    return false;
+                }
+                int day = Integer.parseInt(it.next());
+                kit.setNext(Math.max(0, day));
+                main.save(kit);
+                sender.sendMessage(ChatColor.GREEN + "冷却已设置");
+            } else {
+                kit.setPeriod(0);
+                main.save(kit);
+                sender.sendMessage(ChatColor.GREEN + "冷却已取消");
+            }
+            return true;
+        } else {
+            sendInfo(sender);
+        }
+        return false;
+    }
+
     private void kit(Player p, Kit kit) {
         if (!(nil(kit.getPermission()) || p.hasPermission(kit.getPermission()))) {
             Main.getMessenger().send(p, "receive.failed.permission");
             return;
         }
 
-        if (kit.getPeriod() == 0 && kit.getDay() == 0) {
+        if (kit.getPeriod() == 0 && kit.getNext() == 0) {
             kitOrder(p, kit);
             return;
         }
@@ -258,16 +268,6 @@ public class KitCommand implements CommandExecutor {
 
         String str = Main.getMessenger().find("receive.failed.cooling");
         p.sendMessage(str.replace("%time%", String.valueOf(next)).replace('&', ChatColor.COLOR_CHAR));
-    }
-
-    public static long nextKit(Kit kit, KitOrder order) {
-        int period = kit.getPeriod();
-        if (period > 0) {
-            return order.getTime() + kit.getPeriod() - Main.now();
-        }
-        int day = kit.getDay();
-        Instant next = Instant.ofEpochSecond(order.getTime()).plus(day, ChronoUnit.DAYS);
-        return LocalDateTime.ofInstant(next, ZoneId.systemDefault()).toLocalDate().atStartOfDay().atZone(ZoneId.systemDefault()).toEpochSecond() - Main.now();
     }
 
     private void kitOrder(Player p, Kit kit) {
