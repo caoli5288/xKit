@@ -140,7 +140,7 @@ public class KitCommand implements CommandExecutor {
                 sender.sendMessage(ChatColor.GOLD + "  - permission " + kit.getPermission());
                 sender.sendMessage(ChatColor.GOLD + "  - period " + kit.getPeriod());
                 sender.sendMessage(ChatColor.GOLD + "  - day " + kit.getNext());
-                sender.sendMessage(ChatColor.GOLD + "  - item " + (nil(kit.getItem()) ? "some" : "null"));
+                sender.sendMessage(ChatColor.GOLD + "  - item " + (nil(kit.getItem()) || kit.getItem().isEmpty() ? "null" : "some"));
                 sender.sendMessage(ChatColor.GOLD + "  - command " + kit.getCommand());
             });
         });
