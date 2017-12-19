@@ -3,6 +3,7 @@ package com.mengcraft.xkit;
 import com.mengcraft.xkit.entity.Kit;
 import com.mengcraft.xkit.entity.KitOrder;
 import com.mengcraft.xkit.event.KitReceivedEvent;
+import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
@@ -57,12 +58,23 @@ public class KitCommand implements CommandExecutor {
         } else if (Main.eq(next, "add")) {
             return admin(sender, it, () -> add(sender, it.next()));
         } else if (Main.eq(next, "kit")) {
-            if (it.hasNext() && sender instanceof Player) {
-                main.exec(() -> kit(Player.class.cast(sender), it.next()));
-                return true;
+            if (!it.hasNext()) return false;
+
+            String kit = it.next();
+            if (it.hasNext()) {
+                if (!sender.hasPermission("xkit.admin")) return false;
+
+                Player p = Bukkit.getPlayerExact(it.next());
+                if (nil(p)) {
+                    sender.sendMessage(ChatColor.RED + "!!! xKit -> player not found");
+                } else {
+                    main.exec(() -> kit((Player) sender, kit, true));
+                }
             } else {
-                sendInfo(sender);
+                main.exec(() -> kit((Player) sender, kit, false));
             }
+
+            return true;
         } else if (Main.eq(next, "set")) {
             return admin(sender, it, () -> set(sender, it.next(), it));
         }
@@ -167,12 +179,12 @@ public class KitCommand implements CommandExecutor {
         return false;
     }
 
-    private void kit(Player p, String name) {
+    private void kit(Player p, String name, boolean force) {
         Kit kit = fetch(name, true);
         if (nil(kit)) {
             p.sendMessage(ChatColor.RED + "礼包" + name + "不存在");
         } else if (Main.valid(kit)) {
-            kit(p, kit);
+            kit(p, kit, force);
         } else {
             p.sendMessage(ChatColor.RED + "礼包" + name + "尚未准备好");
         }
@@ -243,13 +255,13 @@ public class KitCommand implements CommandExecutor {
         return false;
     }
 
-    private void kit(Player p, Kit kit) {
-        if (!nil(kit.getPermission()) && !kit.getPermission().isEmpty() && !p.hasPermission(kit.getPermission())) {
+    private void kit(Player p, Kit kit, boolean force) {
+        if (!force && !nil(kit.getPermission()) && !kit.getPermission().isEmpty() && !p.hasPermission(kit.getPermission())) {
             Main.getMessenger().send(p, "receive.failed.permission");
             return;
         }
 
-        if (kit.getPeriod() == 0 && kit.getNext() == 0) {
+        if (force || (kit.getPeriod() == 0 && kit.getNext() == 0)) {
             kitOrder(p, kit);
             return;
         }

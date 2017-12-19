@@ -17,11 +17,12 @@ A kit manager for bukkit based minecraft server. Release under GPLv2.
 - /xkit set <kit_name> command \[command]...
   - 设置领取同时后台执行命令
   - 格式为JSON数组
-  - 示例"/xkit set kit1 command ["kill %player%", "kick %player%"]"
+  - 示例"/xkit set kit1 command \["kill %player%", "kick %player%"]
   - %player%被替换成玩家名
 - /xkit set <kit_name> permission \[permission]
   - 设置领取所需权限
-- /xkit kit <kit_name>
+- /xkit kit <kit_name> \[player_name]
+  - 领取指定礼包。当后接玩家名时，可以使特定玩家强制领取而无视间隔和权限
 
 ## Placeholder
 - xkit_<kit_name>_okay
