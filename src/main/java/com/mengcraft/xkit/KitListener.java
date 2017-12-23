@@ -3,6 +3,7 @@ package com.mengcraft.xkit;
 import com.mengcraft.xkit.entity.Kit;
 import org.bukkit.ChatColor;
 import org.bukkit.Location;
+import org.bukkit.Material;
 import org.bukkit.entity.HumanEntity;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
@@ -12,10 +13,10 @@ import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.json.simple.JSONValue;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
+import java.util.stream.StreamSupport;
 
 /**
  * Created on 16-9-23.
@@ -46,15 +47,14 @@ public class KitListener implements Listener {
     private void kit(HumanEntity p, Inventory inventory) {
         String title = inventory.getTitle();
         if (Main.eq(title, "礼物箱子")) {
-            List<ItemStack> list = new ArrayList<>(Main.KIT_SIZE);
-            inventory.forEach(item -> {
-                if (!Main.nil(item) && item.getTypeId() > 0) list.add(item);
-            });
-            if (!list.isEmpty()) {
-                Collection<ItemStack> overflow = p.getInventory().addItem(list.toArray(new ItemStack[list.size()])).values();
+            ItemStack[] all = StreamSupport.stream(inventory.spliterator(), false)
+                    .filter(item -> !(item == null) && !(item.getType() == Material.AIR))
+                    .toArray(ItemStack[]::new);
+            if (all.length >= 1) {
+                Collection<ItemStack> overflow = p.getInventory().addItem(all).values();
                 if (!overflow.isEmpty()) {
                     Location location = p.getLocation();
-                    list.forEach(item -> location.getWorld().dropItem(location, item));
+                    overflow.forEach(item -> location.getWorld().dropItem(location, item));
                     Main.getMessenger().send(p, "item_overflow", ChatColor.RED + "未领取的物品已掉落脚下");
                 }
             }
