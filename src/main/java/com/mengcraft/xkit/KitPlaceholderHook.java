@@ -57,7 +57,7 @@ public class KitPlaceholderHook extends EZPlaceholderHook {
                 return "null";
             }
 
-            Instant instant = Instant.ofEpochSecond(next);
+            Instant instant = Instant.now().plusSeconds(next);
             LocalDateTime i = LocalDateTime.ofInstant(instant, ZoneId.systemDefault());
 
             return i.getYear() + "年" + i.getMonthValue() + "月" + i.getDayOfMonth() + "日 " + i.getHour() + "点" + i.getMinute() + "分" + i.getSecond() + "秒";
