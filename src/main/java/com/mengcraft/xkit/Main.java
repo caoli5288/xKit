@@ -24,10 +24,12 @@ import java.util.concurrent.Callable;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
+import static java.util.concurrent.CompletableFuture.runAsync;
+
 public class Main extends JavaPlugin implements InventoryHolder {
 
 
-    private static EbeanServer pool;
+    private static EbeanServer dataSource;
     private static Messenger messenger;
 
     @Override
@@ -46,7 +48,7 @@ public class Main extends JavaPlugin implements InventoryHolder {
         }
         db.install(true);
 //        db.reflect();
-        pool = db.getServer();
+        dataSource = db.getServer();
         messenger = new Messenger(this);
 
         exec(() -> new Metrics(this).start());
@@ -77,8 +79,8 @@ public class Main extends JavaPlugin implements InventoryHolder {
         return getServer().createInventory(this, KIT_SIZE, "管理模式|" + name);
     }
 
-    public static EbeanServer getPool() {
-        return pool;
+    public static EbeanServer getDataSource() {
+        return dataSource;
     }
 
     @Override
@@ -105,8 +107,8 @@ public class Main extends JavaPlugin implements InventoryHolder {
         getServer().getScheduler().runTask(this, runnable);
     }
 
-    public void exec(Runnable runnable) {
-        getServer().getScheduler().runTaskAsynchronously(this, runnable);
+    public static void exec(Runnable runnable) {
+        runAsync(runnable);
     }
 
     public <T> void exec(T in, Consumer<T> consumer) {
@@ -114,11 +116,11 @@ public class Main extends JavaPlugin implements InventoryHolder {
     }
 
     public <T> Query<T> find(Class<T> type) {
-        return pool.find(type);
+        return dataSource.find(type);
     }
 
     public void save(Object object) {
-        pool.save(object);
+        dataSource.save(object);
     }
 
     public static long now() {

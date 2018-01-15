@@ -68,17 +68,33 @@ public class KitCommand implements CommandExecutor {
                 if (nil(p)) {
                     sender.sendMessage(ChatColor.RED + "!!! xKit -> player not found");
                 } else {
-                    main.exec(() -> kit((Player) sender, kit, true));
+                    Main.exec(() -> kit((Player) sender, kit, true));
                 }
             } else {
-                main.exec(() -> kit((Player) sender, kit, false));
+                Main.exec(() -> kit((Player) sender, kit, false));
             }
 
             return true;
         } else if (Main.eq(next, "set")) {
             return admin(sender, it, () -> set(sender, it.next(), it));
+        } else if (Main.eq(next, "add-token")) {
+            return admin(sender, it, () -> addToken(sender, it.next(), it));
         }
         return false;
+    }
+
+    private void addToken(CommandSender sender, String name, Iterator<String> it) {
+        Player p = Bukkit.getPlayerExact(name);
+        if (nil(p)) {
+            sender.sendMessage(ChatColor.RED + "玩家不在线");
+        }
+
+        String token = it.next();
+        int amount = it.hasNext() ? Integer.parseInt(it.next()) : 1;
+
+        UseTokenMgr.supply(p, token, amount);
+
+        sender.sendMessage(ChatColor.GREEN + "操作已完成");
     }
 
     public static long nextKit(Kit kit, KitOrder order) {
@@ -94,7 +110,7 @@ public class KitCommand implements CommandExecutor {
     private boolean admin(CommandSender sender, Iterator<String> it, Runnable runnable) {
         boolean result = it.hasNext() && sender.hasPermission("xkit.admin");
         if (result) {
-            main.exec(runnable);
+            Main.exec(runnable);
         } else {
             sendInfo(sender);
         }
@@ -106,7 +122,7 @@ public class KitCommand implements CommandExecutor {
         if (nil(kit)) {
             sender.sendMessage(ChatColor.RED + "礼包" + next + "不存在");
         } else {
-            Main.getPool().delete(kit);
+            Main.getDataSource().delete(kit);
             L2Pool.expire(kit);
             sender.sendMessage(ChatColor.GREEN + "礼包" + next + "已删除成功");
         }
@@ -115,7 +131,7 @@ public class KitCommand implements CommandExecutor {
     private void add(CommandSender p, String name) {
         Kit fetch = fetch(name, false);
         if (nil(fetch)) {
-            Kit kit = Main.getPool().createEntityBean(Kit.class);
+            Kit kit = Main.getDataSource().createEntityBean(Kit.class);
             kit.setName(name);
             main.save(kit);
             p.sendMessage(ChatColor.GREEN + "礼包" + name + "已定义成功");
@@ -150,6 +166,7 @@ public class KitCommand implements CommandExecutor {
             list.forEach(kit -> {
                 sender.sendMessage(ChatColor.GOLD + "- " + kit.getName());
                 sender.sendMessage(ChatColor.GOLD + "  - permission " + kit.getPermission());
+                sender.sendMessage(ChatColor.GOLD + "  - token " + kit.getUseToken());
                 sender.sendMessage(ChatColor.GOLD + "  - period " + kit.getPeriod());
                 sender.sendMessage(ChatColor.GOLD + "  - day " + kit.getNext());
                 sender.sendMessage(ChatColor.GOLD + "  - item " + (nil(kit.getItem()) || kit.getItem().isEmpty() ? "null" : "some"));
@@ -255,13 +272,23 @@ public class KitCommand implements CommandExecutor {
         return false;
     }
 
-    private void kit(Player p, Kit kit, boolean force) {
-        if (!force && !nil(kit.getPermission()) && !kit.getPermission().isEmpty() && !p.hasPermission(kit.getPermission())) {
+    private void kit(Player p, Kit kit, boolean f) {
+        if (f) {
+            kitOrder(p, kit);
+            return;
+        }
+
+        if (!nil(kit.getUseToken()) && !UseTokenMgr.consume(p, kit.getUseToken())) {
+            Main.getMessenger().send(p, "receive.failed.token", "您没有领取该礼包所需的凭证");
+            return;
+        }
+
+        if (!nil(kit.getPermission()) && !kit.getPermission().isEmpty() && !p.hasPermission(kit.getPermission())) {
             Main.getMessenger().send(p, "receive.failed.permission");
             return;
         }
 
-        if (force || (kit.getPeriod() == 0 && kit.getNext() == 0)) {
+        if (kit.getPeriod() == 0 && kit.getNext() == 0) {
             kitOrder(p, kit);
             return;
         }
@@ -325,6 +352,7 @@ public class KitCommand implements CommandExecutor {
         if (p.hasPermission("xkit.admin")) {
             p.sendMessage(ChatColor.RED + "/xkit all");
             p.sendMessage(ChatColor.RED + "/xkit add <kit_name>");
+            p.sendMessage(ChatColor.RED + "/xkit add-token <player> <token> [amount]");
             p.sendMessage(ChatColor.RED + "/xkit del <kit_name>");
             if (p instanceof Player) {
                 p.sendMessage(ChatColor.RED + "/xkit set <kit_name>");
