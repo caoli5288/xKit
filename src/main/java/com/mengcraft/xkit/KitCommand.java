@@ -209,7 +209,18 @@ public class KitCommand implements CommandExecutor {
 
     private boolean set(CommandSender sender, Kit kit, Iterator<String> it) {
         String next = it.next();
-        if (Main.eq(next, "command")) {
+        if (Main.eq(next, "token")) {
+            if (it.hasNext()) {
+                String tok = it.next();
+                kit.setUseToken(tok);
+                main.save(kit);
+                sender.sendMessage(ChatColor.GREEN + "令牌已设置");
+            } else {
+                kit.setUseToken(null);
+                main.save(kit);
+                sender.sendMessage(ChatColor.GREEN + "令牌已取消");
+            }
+        } else if (Main.eq(next, "command")) {
             if (it.hasNext()) {
                 return setCommand(sender, it, kit);
             } else {
@@ -360,6 +371,7 @@ public class KitCommand implements CommandExecutor {
             p.sendMessage(ChatColor.RED + "/xkit set <kit_name> permission [permission]");
             p.sendMessage(ChatColor.RED + "/xkit set <kit_name> period [period_second]");
             p.sendMessage(ChatColor.RED + "/xkit set <kit_name> day [period_day]");
+            p.sendMessage(ChatColor.RED + "/xkit set <kit_name> token [token_name]");
             p.sendMessage(ChatColor.RED + "/xkit set <kit_name> command [command]...");
         }
         p.sendMessage(ChatColor.RED + "/xkit kit <kit_name>");

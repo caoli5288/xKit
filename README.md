@@ -6,12 +6,14 @@ A kit manager for bukkit based minecraft server. Release under GPLv2.
   - 检视所有已定义的礼包
 - /xkit add <kit_name>
   - 定义新礼包
+- /xkit add-token <player> <token> [amount]
 - /xkit del <kit_name>
   - 删除已定义的礼包
 - /xkit set <kit_name>
   - 设置礼包内含物品
 - /xkit set <kit_name> period \[period_time]
   - 设置礼包领取间隔（秒）
+- /xkit set <kit_name> token <token_name> \[amount]
 - /xkit set <kit_name> day \[period_day]
   - 设置礼包领取间隔（天）
 - /xkit set <kit_name> command \[command]...
