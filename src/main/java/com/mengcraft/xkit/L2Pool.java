@@ -57,12 +57,8 @@ public enum L2Pool {
     }
 
     public static void expire(Player p) {
-        Object[] array = INST.pool.asMap().keySet().toArray();
-        String id = String.valueOf(p.getUniqueId());
-        for (Object el : array) {
-            String key = String.valueOf(el);
-            if (key.startsWith(id)) expire(key);
-        }
+        String namespace = p.getUniqueId() + ":";
+        INST.pool.asMap().keySet().removeIf(key -> key.startsWith(namespace));
     }
 
     public static void put(KitOrder order) {

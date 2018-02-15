@@ -19,9 +19,9 @@ public class UseTokenMgr {
             EbeanServer db = Main.getDataSource();
             KitUseToken useToken = db.find(KitUseToken.class, p.getUniqueId());
             if (useToken == null || useToken.getUseToken() == null) {
-                return new UseTokenWrapper(new HashMap<>());
+                return new UseTokenWrapper(null, new HashMap<>());
             }
-            return new UseTokenWrapper((Map<String, Integer>) JSONValue.parse(useToken.getUseToken()));
+            return new UseTokenWrapper(useToken, (Map<String, Integer>) JSONValue.parse(useToken.getUseToken()));
         });
     }
 
@@ -37,33 +37,31 @@ public class UseTokenMgr {
     }
 
     public static boolean consume(Player p, String useToken) {
-        UseTokenWrapper load = load(p);
+        UseTokenWrapper wrapper = load(p);
 
-        Integer val = load.all.get(useToken);
-        if (nil(val)) {
+        Integer val = wrapper.all.get(useToken);
+        if (nil(val) || val < 1) {
             return false;
         }
 
-        if (val-- < 1) {
-            return false;
-        }
+        wrapper.all.put(useToken, --val);
 
-        load.all.put(useToken, val);
-        save(p, load);
+        save(p, wrapper);
 
         return true;
     }
 
     public static void save(Player p, UseTokenWrapper wrapper) {
         EbeanServer db = Main.getDataSource();
-        int result = db.createUpdate(KitUseToken.class, "update kit_use_token set use_token = :token where id = :id;")
-                .setParameter("token", JSONObject.toJSONString(wrapper.all))
-                .setParameter("id", p.getUniqueId())
-                .execute();
-        if (result < 1) {
+        if (nil(wrapper.token)) {
             db.createUpdate(KitUseToken.class, "insert into kit_use_token set id = :id, name = :name, use_token = :token;")
                     .setParameter("id", p.getUniqueId())
                     .setParameter("name", p.getName())
+                    .setParameter("token", JSONObject.toJSONString(wrapper.all))
+                    .execute();
+        } else {
+            db.createUpdate(KitUseToken.class, "update kit_use_token set use_token = :token where id = :id;")
+                    .setParameter("id", p.getUniqueId())
                     .setParameter("token", JSONObject.toJSONString(wrapper.all))
                     .execute();
         }
@@ -72,6 +70,7 @@ public class UseTokenMgr {
     @Data
     public static class UseTokenWrapper {
 
+        private final KitUseToken token;
         private final Map<String, Integer> all;
     }
 }
