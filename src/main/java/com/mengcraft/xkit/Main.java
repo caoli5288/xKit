@@ -8,6 +8,7 @@ import com.mengcraft.simpleorm.EbeanHandler;
 import com.mengcraft.simpleorm.EbeanManager;
 import com.mengcraft.xkit.entity.Kit;
 import com.mengcraft.xkit.entity.KitOrder;
+import com.mengcraft.xkit.entity.KitUseToken;
 import com.mengcraft.xkit.util.Messenger;
 import org.bukkit.Bukkit;
 import org.bukkit.inventory.Inventory;
@@ -40,6 +41,7 @@ public class Main extends JavaPlugin implements InventoryHolder {
         if (db.isNotInitialized()) {
             db.define(Kit.class);
             db.define(KitOrder.class);
+            db.define(KitUseToken.class);
             try {
                 db.initialize();
             } catch (DatabaseException e) {
