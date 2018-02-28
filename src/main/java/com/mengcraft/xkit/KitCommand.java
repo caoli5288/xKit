@@ -68,9 +68,12 @@ public class KitCommand implements CommandExecutor {
                 if (nil(p)) {
                     sender.sendMessage(ChatColor.RED + "!!! xKit -> player not found");
                 } else {
-                    Main.exec(() -> kit((Player) sender, kit, true));
+                    Main.exec(() -> kit(p, kit, true));
                 }
             } else {
+                if (!(sender instanceof Player)) {
+                    return false;
+                }
                 Main.exec(() -> kit((Player) sender, kit, false));
             }
 
@@ -374,7 +377,7 @@ public class KitCommand implements CommandExecutor {
             p.sendMessage(ChatColor.RED + "/xkit set <kit_name> token [token_name]");
             p.sendMessage(ChatColor.RED + "/xkit set <kit_name> command [command]...");
         }
-        p.sendMessage(ChatColor.RED + "/xkit kit <kit_name>");
+        p.sendMessage(ChatColor.RED + "/xkit kit <kit_name> [player_name]");
     }
 
 }
