@@ -351,6 +351,7 @@ public class KitCommand implements CommandExecutor {
     private void dispatch(Player p, String command) {
         List<String> list = (List<String>) JSONValue.parse(command);
         for (String line : list) {
+            line = Formatter.format(p, line);
             main.dispatch(line.replace("%player%", p.getName()));
         }
     }

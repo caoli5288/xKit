@@ -60,7 +60,7 @@ public class KitListener implements Listener {
             }
             inventory.clear();
         } else {
-            String name = title.substring(5, title.length());
+            String name = title.split("\\|")[1];
             Kit kit = command.fetch(name, true);
             if (Main.nil(kit)) {
                 throw new IllegalStateException("喵喵喵");

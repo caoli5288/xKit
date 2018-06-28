@@ -60,6 +60,7 @@ public class Main extends JavaPlugin implements InventoryHolder {
 
         if (Bukkit.getPluginManager().isPluginEnabled("PlaceholderAPI")) {
             KitPlaceholderHook hook = new KitPlaceholderHook(this);
+            Formatter.setReplacePlaceholder(true);
             hook.hook();
         }
 
