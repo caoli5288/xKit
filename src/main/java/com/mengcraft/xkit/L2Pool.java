@@ -45,7 +45,7 @@ public enum L2Pool {
     @SneakyThrows
     public static Kit kitByName(String name) {
         return valid(INST.pool.get("kit:name:" + name, () -> {
-            Kit kit = Main.getDataSource().find(Kit.class)
+            Kit kit = KitPlugin.getDataSource().find(Kit.class)
                     .where("name = :name")
                     .setParameter("name", name)
                     .findUnique();
@@ -68,7 +68,7 @@ public enum L2Pool {
     @SneakyThrows
     public static KitOrder orderBy(Player p, Kit kit) {
         return valid(INST.pool.get(p.getUniqueId() + ":" + kit.getId(), () -> {
-            List<?> order = Main.getDataSource().find(KitOrder.class)
+            List<?> order = KitPlugin.getDataSource().find(KitOrder.class)
                     .where("player = :player and kit_id = :kit_id")
                     .setParameter("player", p.getUniqueId())
                     .setParameter("kit_id", kit.getId())

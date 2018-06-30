@@ -1,6 +1,6 @@
 package com.mengcraft.xkit.entity;
 
-import com.mengcraft.xkit.Main;
+import com.mengcraft.xkit.KitPlugin;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.val;
@@ -31,7 +31,7 @@ public class KitOrder {
         val order = new KitOrder();
         order.player = p.getUniqueId();
         order.kitId = kit.getId();
-        order.time = Main.now();
+        order.time = KitPlugin.now();
         return order;
     }
 }

@@ -2,75 +2,68 @@ package com.mengcraft.xkit;
 
 import com.avaje.ebean.EbeanServer;
 import com.mengcraft.xkit.entity.KitUseToken;
-import lombok.Data;
+import lombok.RequiredArgsConstructor;
 import org.bukkit.entity.Player;
-import org.json.simple.JSONObject;
-import org.json.simple.JSONValue;
+import org.bukkit.metadata.FixedMetadataValue;
+import org.bukkit.util.NumberConversions;
 
-import java.util.HashMap;
-import java.util.Map;
+import javax.persistence.OptimisticLockException;
 
-import static com.mengcraft.xkit.Main.nil;
+import static com.mengcraft.xkit.KitPlugin.nil;
 
+@RequiredArgsConstructor
 public class UseTokenMgr {
 
-    public static UseTokenWrapper load(Player p) {
-        return L2Pool.load(String.valueOf(p.getUniqueId()) + ":use_token", () -> {
-            EbeanServer db = Main.getDataSource();
-            KitUseToken useToken = db.find(KitUseToken.class, p.getUniqueId());
-            if (useToken == null || useToken.getUseToken() == null) {
-                return new UseTokenWrapper(null, new HashMap<>());
+    private static final String META_KEY = "_kit_use_token";
+    private final KitPlugin plugin;
+
+    public KitUseToken load(Player player) {
+        if (player.hasMetadata(META_KEY)) {
+            return (KitUseToken) player.getMetadata(META_KEY).iterator().next().value();
+        }
+        KitUseToken useToken = plugin.getDataSource().find(KitUseToken.class, player.getUniqueId());
+        if (useToken == null) {
+            useToken = plugin.getDataSource().createEntityBean(KitUseToken.class);
+            useToken.setId(player.getUniqueId());
+            useToken.setName(player.getName());
+        }
+        useToken.flip();
+        player.setMetadata(META_KEY, new FixedMetadataValue(plugin, useToken));
+        return useToken;
+    }
+
+    public void supply(Player p, String token, int amount) {
+        KitUseToken load = load(p);
+        load.getUseTokenWrapper().compute(token, (__, old) -> NumberConversions.toLong(old) + amount);
+        save(load);
+    }
+
+    public void consume(Player p, String useToken, int amount) throws IllegalStateException {
+        KitUseToken token = load(p);
+        token.getUseTokenWrapper().compute(useToken, (__, old) -> {
+            long value = NumberConversions.toLong(old);
+            if (value < amount) {
+                throw new IllegalStateException("consume " + amount + " " + token);
             }
-            return new UseTokenWrapper(useToken, (Map<String, Integer>) JSONValue.parse(useToken.getUseToken()));
+            return value - amount;
         });
+        save(token);
     }
 
-    public static void supply(Player p, String token, int amount) {
-        UseTokenWrapper load = load(p);
-        Integer val = load.all.get(token);
-        if (nil(val)) {
-            load.all.put(token, amount);
-        } else {
-            load.all.put(token, amount + val);
-        }
-        save(p, load);
-    }
-
-    public static boolean consume(Player p, String useToken) {
-        UseTokenWrapper wrapper = load(p);
-
-        Integer val = wrapper.all.get(useToken);
-        if (nil(val) || val < 1) {
-            return false;
-        }
-
-        wrapper.all.put(useToken, --val);
-
-        save(p, wrapper);
-
-        return true;
-    }
-
-    public static void save(Player p, UseTokenWrapper wrapper) {
-        EbeanServer db = Main.getDataSource();
-        if (nil(wrapper.token)) {
-            db.createUpdate(KitUseToken.class, "insert into kit_use_token set id = :id, name = :name, use_token = :token;")
-                    .setParameter("id", p.getUniqueId())
-                    .setParameter("name", p.getName())
-                    .setParameter("token", JSONObject.toJSONString(wrapper.all))
+    public void save(KitUseToken useToken) {
+        EbeanServer source = plugin.getDataSource();
+        useToken.flip();
+        try {
+            source.save(useToken);
+        } catch (OptimisticLockException ignored) {
+            int result = source.createSqlUpdate("update kit_use_token set use_token = ? where id = ?")
+                    .setParameter(1, useToken.getUseToken())
+                    .setParameter(2, useToken.getId())
                     .execute();
-        } else {
-            db.createUpdate(KitUseToken.class, "update kit_use_token set use_token = :token where id = :id;")
-                    .setParameter("id", p.getUniqueId())
-                    .setParameter("token", JSONObject.toJSONString(wrapper.all))
-                    .execute();
+            if (result < 1) {
+                throw new IllegalStateException("update kit use token " + useToken);
+            }
         }
     }
 
-    @Data
-    public static class UseTokenWrapper {
-
-        private final KitUseToken token;
-        private final Map<String, Integer> all;
-    }
 }

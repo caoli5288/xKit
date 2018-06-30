@@ -15,7 +15,7 @@ import java.util.Iterator;
 import java.util.Objects;
 import java.util.logging.Level;
 
-import static com.mengcraft.xkit.Main.nil;
+import static com.mengcraft.xkit.KitPlugin.nil;
 
 public class KitPlaceholderHook extends EZPlaceholderHook {
 

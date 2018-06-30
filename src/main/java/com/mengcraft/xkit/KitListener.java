@@ -24,9 +24,9 @@ import java.util.stream.StreamSupport;
 public class KitListener implements Listener {
 
     private final KitCommand command;
-    private final Main main;
+    private final KitPlugin main;
 
-    public KitListener(Main main, KitCommand command) {
+    public KitListener(KitPlugin main, KitCommand command) {
         this.main = main;
         this.command = command;
     }
@@ -34,7 +34,7 @@ public class KitListener implements Listener {
     @EventHandler
     public void handle(InventoryCloseEvent event) {
         Inventory pak = event.getInventory();
-        if (Main.isKitView(pak)) {
+        if (KitPlugin.isKitView(pak)) {
             kit(event.getPlayer(), pak);
         }
     }
@@ -46,7 +46,7 @@ public class KitListener implements Listener {
 
     private void kit(HumanEntity p, Inventory inventory) {
         String title = inventory.getTitle();
-        if (Main.eq(title, "礼物箱子")) {
+        if ("礼物箱子".equals(title)) {
             ItemStack[] all = StreamSupport.stream(inventory.spliterator(), false)
                     .filter(item -> !(item == null) && !(item.getType() == Material.AIR))
                     .toArray(ItemStack[]::new);
@@ -55,19 +55,19 @@ public class KitListener implements Listener {
                 if (!overflow.isEmpty()) {
                     Location location = p.getLocation();
                     overflow.forEach(item -> location.getWorld().dropItem(location, item));
-                    Main.getMessenger().send(p, "item_overflow", ChatColor.RED + "未领取的物品已掉落脚下");
+                    KitPlugin.getMessenger().send(p, "item_overflow", ChatColor.RED + "未领取的物品已掉落脚下");
                 }
             }
             inventory.clear();
         } else {
             String name = title.split("\\|")[1];
             Kit kit = command.fetch(name, true);
-            if (Main.nil(kit)) {
+            if (KitPlugin.nil(kit)) {
                 throw new IllegalStateException("喵喵喵");
             } else {
-                List<String> list = Main.collect(Arrays.asList(inventory.getContents()), item -> {
-                    if (!Main.nil(item) && item.getTypeId() > 0) {
-                        return Main.encode(item);
+                List<String> list = KitPlugin.collect(Arrays.asList(inventory.getContents()), item -> {
+                    if (!KitPlugin.nil(item) && item.getTypeId() > 0) {
+                        return KitPlugin.encode(item);
                     }
                     return null;
                 });
