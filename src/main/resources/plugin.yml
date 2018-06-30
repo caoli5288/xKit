@@ -1,5 +1,5 @@
 name: xKit
-main: com.mengcraft.xkit.Main
+main: com.mengcraft.xkit.KitPlugin
 version: ${project.version}
 
 commands:

@@ -34,7 +34,7 @@ public class KitPlugin extends JavaPlugin implements InventoryHolder {
     public static final StreamSerializer SERIALIZER = new StreamSerializer();
     public static final int KIT_SIZE = 54;
     private static Messenger messenger;
-    private EbeanServer dataSource;
+    private static EbeanServer dataSource;
     private UseTokenMgr useTokenMgr;
 
     public static Messenger getMessenger() {
@@ -64,6 +64,10 @@ public class KitPlugin extends JavaPlugin implements InventoryHolder {
 
     public static boolean valid(Kit kit) {
         return !(nil(kit.getItem()) && nil(kit.getCommand()));
+    }
+
+    public static boolean nil(Object any) {
+        return any == null;
     }
 
     public static ItemStack[] itemListFrom(Kit kit) {
@@ -132,7 +136,7 @@ public class KitPlugin extends JavaPlugin implements InventoryHolder {
         getServer().getPluginManager().registerEvents(new KitListener(this, command), this);
     }
 
-    public EbeanServer getDataSource() {
+    public static EbeanServer getDataSource() {
         return dataSource;
     }
 
@@ -146,10 +150,6 @@ public class KitPlugin extends JavaPlugin implements InventoryHolder {
             return getServer().createInventory(this, KIT_SIZE, "礼物箱子");
         }
         return getServer().createInventory(this, KIT_SIZE, "管理模式|" + name);
-    }
-
-    public static boolean nil(Object any) {
-        return any == null;
     }
 
     public void dispatch(String command) {
