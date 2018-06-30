@@ -330,6 +330,7 @@ public class KitCommand implements CommandExecutor {
         try {
             main.getUseTokenMgr().consume(p, useToken, 1);
         } catch (IllegalStateException e) {
+            KitPlugin.getMessenger().send(p, "no_token", "&c没有足够的Token");
             return;
         }
         kitOrder(p, kit);
