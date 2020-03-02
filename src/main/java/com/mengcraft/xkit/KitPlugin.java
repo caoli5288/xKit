@@ -1,16 +1,18 @@
 package com.mengcraft.xkit;
 
-import com.avaje.ebean.EbeanServer;
-import com.avaje.ebean.Query;
 import com.comphenix.protocol.utility.StreamSerializer;
-import com.mengcraft.simpleorm.DatabaseException;
-import com.mengcraft.simpleorm.EbeanHandler;
-import com.mengcraft.simpleorm.EbeanManager;
+import com.github.skystardust.ultracore.core.PluginInstance;
+import com.github.skystardust.ultracore.core.database.newgen.DatabaseManager;
+import com.github.skystardust.ultracore.core.exceptions.ConfigurationException;
+import com.github.skystardust.ultracore.core.exceptions.DatabaseInitException;
 import com.mengcraft.xkit.entity.Kit;
 import com.mengcraft.xkit.entity.KitOrder;
 import com.mengcraft.xkit.entity.KitUseToken;
 import com.mengcraft.xkit.util.Messenger;
+import io.ebean.EbeanServer;
+import io.ebean.Query;
 import org.bukkit.Bukkit;
+import org.bukkit.ChatColor;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.InventoryHolder;
 import org.bukkit.inventory.ItemStack;
@@ -20,15 +22,17 @@ import org.json.simple.JSONValue;
 import java.io.IOException;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.Callable;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.logging.Logger;
 
 import static java.util.concurrent.CompletableFuture.runAsync;
 
-public class KitPlugin extends JavaPlugin implements InventoryHolder {
+public class KitPlugin extends JavaPlugin implements InventoryHolder, PluginInstance {
 
 
     public static final StreamSerializer SERIALIZER = new StreamSerializer();
@@ -36,6 +40,7 @@ public class KitPlugin extends JavaPlugin implements InventoryHolder {
     private static Messenger messenger;
     private static EbeanServer dataSource;
     private UseTokenMgr useTokenMgr;
+    private DatabaseManager databaseManager;
 
     public static Messenger getMessenger() {
         return messenger;
@@ -96,6 +101,14 @@ public class KitPlugin extends JavaPlugin implements InventoryHolder {
         return null;
     }
 
+    public static EbeanServer getDataSource() {
+        return dataSource;
+    }
+
+    public static void exec(Runnable runnable) {
+        runAsync(runnable);
+    }
+
     public UseTokenMgr getUseTokenMgr() {
         return useTokenMgr;
     }
@@ -103,26 +116,28 @@ public class KitPlugin extends JavaPlugin implements InventoryHolder {
     @Override
     public void onEnable() {
         saveDefaultConfig();
-
-        EbeanHandler db = EbeanManager.DEFAULT.getHandler(this);
-        if (db.isNotInitialized()) {
-            db.define(Kit.class);
-            db.define(KitOrder.class);
-            db.define(KitUseToken.class);
-            try {
-                db.initialize();
-            } catch (DatabaseException e) {
-                throw new RuntimeException("db");
-            }
+        try {
+            databaseManager = DatabaseManager.newBuilder()
+                    .withName("xkit")
+                    .withSqlConfiguration(DatabaseManager.setupDatabase(this))
+                    .withOwnerPlugin(this)
+                    .withModelClass(Arrays.asList(Kit.class, KitOrder.class, KitUseToken.class))
+                    .build()
+                    .openConnection();
+        } catch (DatabaseInitException e) {
+            getServer().getConsoleSender().sendMessage(ChatColor.RED + " Failed to init database.");
+            getServer().getConsoleSender().sendMessage(ChatColor.RED + e.getLocalizedMessage());
+            return;
+        } catch (ConfigurationException e) {
+            getServer().getConsoleSender().sendMessage(ChatColor.RED + " Failed to init configurations.");
+            getServer().getConsoleSender().sendMessage(ChatColor.RED + e.getLocalizedMessage());
+            return;
         }
-        db.install(true);
 
-        dataSource = db.getServer();
+        dataSource = databaseManager.getEbeanServer();
         messenger = new Messenger(this);
 
         useTokenMgr = new UseTokenMgr(this);
-
-        new MetricsLite(this);
 
         KitCommand command = new KitCommand(this);
         getCommand("xkit").setExecutor(command);
@@ -134,10 +149,6 @@ public class KitPlugin extends JavaPlugin implements InventoryHolder {
         }
 
         getServer().getPluginManager().registerEvents(new KitListener(this, command), this);
-    }
-
-    public static EbeanServer getDataSource() {
-        return dataSource;
     }
 
     @Override
@@ -167,10 +178,6 @@ public class KitPlugin extends JavaPlugin implements InventoryHolder {
         });
     }
 
-    public static void exec(Runnable runnable) {
-        runAsync(runnable);
-    }
-
     public void run(Runnable runnable) {
         getServer().getScheduler().runTask(this, runnable);
     }
@@ -185,5 +192,10 @@ public class KitPlugin extends JavaPlugin implements InventoryHolder {
 
     public void save(Object object) {
         dataSource.save(object);
+    }
+
+    @Override
+    public Logger getPluginLogger() {
+        return getLogger();
     }
 }

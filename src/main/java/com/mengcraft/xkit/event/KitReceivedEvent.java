@@ -19,15 +19,6 @@ public class KitReceivedEvent extends PlayerEvent {
         this.kit = kit;
     }
 
-    public Kit getKit() {
-        return kit;
-    }
-
-    @Override
-    public HandlerList getHandlers() {
-        return HANDLER_LIST;
-    }
-
     public static HandlerList getHandlerList() {
         return HANDLER_LIST;
     }
@@ -36,6 +27,15 @@ public class KitReceivedEvent extends PlayerEvent {
         KitReceivedEvent event = new KitReceivedEvent(p, kit);
         Bukkit.getPluginManager().callEvent(event);
         return event;
+    }
+
+    public Kit getKit() {
+        return kit;
+    }
+
+    @Override
+    public HandlerList getHandlers() {
+        return HANDLER_LIST;
     }
 
 }

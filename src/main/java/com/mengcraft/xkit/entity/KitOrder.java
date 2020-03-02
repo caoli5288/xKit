@@ -9,6 +9,7 @@ import org.bukkit.entity.Player;
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.Id;
+import javax.persistence.Table;
 import java.util.UUID;
 
 /**
@@ -17,6 +18,7 @@ import java.util.UUID;
 @Entity
 @Data
 @EqualsAndHashCode(of = "id")
+@Table(name = "kit_order")
 public class KitOrder {
 
     @Id

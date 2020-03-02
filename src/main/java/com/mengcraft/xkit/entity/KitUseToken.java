@@ -8,6 +8,7 @@ import org.json.simple.JSONValue;
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.Id;
+import javax.persistence.Table;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
@@ -15,6 +16,7 @@ import java.util.UUID;
 @Entity
 @Data
 @EqualsAndHashCode(of = "id")
+@Table(name = "kit_token")
 public class KitUseToken {
 
     @Id

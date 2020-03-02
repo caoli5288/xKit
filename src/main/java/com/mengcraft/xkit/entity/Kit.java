@@ -6,6 +6,7 @@ import lombok.EqualsAndHashCode;
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.Id;
+import javax.persistence.Table;
 
 /**
  * Created on 16-9-23.
@@ -13,6 +14,7 @@ import javax.persistence.Id;
 @Entity
 @Data
 @EqualsAndHashCode(of = "id")
+@Table(name = "kit")
 public class Kit {
 
     @Id

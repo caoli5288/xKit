@@ -1,15 +1,13 @@
 package com.mengcraft.xkit;
 
-import com.avaje.ebean.EbeanServer;
 import com.mengcraft.xkit.entity.KitUseToken;
+import io.ebean.EbeanServer;
 import lombok.RequiredArgsConstructor;
 import org.bukkit.entity.Player;
 import org.bukkit.metadata.FixedMetadataValue;
 import org.bukkit.util.NumberConversions;
 
 import javax.persistence.OptimisticLockException;
-
-import static com.mengcraft.xkit.KitPlugin.nil;
 
 @RequiredArgsConstructor
 public class UseTokenMgr {

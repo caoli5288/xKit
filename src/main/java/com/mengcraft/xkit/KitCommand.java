@@ -42,6 +42,16 @@ public class KitCommand implements CommandExecutor {
         root.register("kit", (sender, input) -> kit(sender, input));
     }
 
+    public static long nextKit(Kit kit, KitOrder order) {
+        int period = kit.getPeriod();
+        if (period > 0) {
+            return order.getTime() + kit.getPeriod() - KitPlugin.now();
+        }
+        int day = kit.getNext();
+        Instant next = Instant.ofEpochSecond(order.getTime()).plus(day, ChronoUnit.DAYS);
+        return LocalDateTime.ofInstant(next, ZoneId.systemDefault()).toLocalDate().atStartOfDay().atZone(ZoneId.systemDefault()).toEpochSecond() - KitPlugin.now();
+    }
+
     private boolean admin(CommandSender sender, Iterator<String> it, Runnable runnable) {
         boolean result = it.hasNext() && sender.hasPermission("xkit.admin");
         if (result) {
@@ -128,6 +138,7 @@ public class KitCommand implements CommandExecutor {
     }
 
     private void kit(CommandSender sender, Iterator<String> input) {
+
         if (!input.hasNext()) {
             return;
         }
@@ -284,6 +295,7 @@ public class KitCommand implements CommandExecutor {
     }
 
     private void kit(Player p, Kit kit, boolean force) {
+
         if (force) {
             preKitOrder(p, kit, true);
             return;
@@ -322,6 +334,7 @@ public class KitCommand implements CommandExecutor {
     private void preKitOrder(Player p, Kit kit, boolean force) {
         if (force) {
             kitOrder(p, kit);
+            return;
         }
         String useToken = kit.getUseToken();
         if (useToken == null || useToken.isEmpty()) {
@@ -343,17 +356,8 @@ public class KitCommand implements CommandExecutor {
         main.run(() -> kit1(p, kit));
     }
 
-    public static long nextKit(Kit kit, KitOrder order) {
-        int period = kit.getPeriod();
-        if (period > 0) {
-            return order.getTime() + kit.getPeriod() - KitPlugin.now();
-        }
-        int day = kit.getNext();
-        Instant next = Instant.ofEpochSecond(order.getTime()).plus(day, ChronoUnit.DAYS);
-        return LocalDateTime.ofInstant(next, ZoneId.systemDefault()).toLocalDate().atStartOfDay().atZone(ZoneId.systemDefault()).toEpochSecond() - KitPlugin.now();
-    }
-
     private void kit1(Player p, Kit kit) {
+
         if (!nil(kit.getCommand()) && !kit.getCommand().isEmpty()) {
             dispatch(p, kit.getCommand());
         }

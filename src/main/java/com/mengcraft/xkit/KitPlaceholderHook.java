@@ -23,9 +23,19 @@ public class KitPlaceholderHook extends EZPlaceholderHook {
         super(plugin, "xkit");
     }
 
-    interface IFunc {
-
-        String execute(Player p, Kit kit);
+    @Override
+    public String onPlaceholderRequest(Player p, String label) {
+        Iterator<String> itr = Arrays.asList(label.split("_")).iterator();
+        Kit kit = L2Pool.kitByName(itr.next());
+        if (nil(kit)) {
+            return "null";
+        }
+        try {
+            return Label.valueOf(itr.next().toUpperCase()).func.execute(p, kit);
+        } catch (Exception thr) {
+            Bukkit.getLogger().log(Level.SEVERE, "", thr);
+        }
+        return "null";
     }
 
     enum Label {
@@ -63,30 +73,20 @@ public class KitPlaceholderHook extends EZPlaceholderHook {
             return i.getYear() + "年" + i.getMonthValue() + "月" + i.getDayOfMonth() + "日 " + i.getHour() + "点" + i.getMinute() + "分" + i.getSecond() + "秒";
         });
 
-        static String okay(Player p, Kit kit) {
-            return Objects.equals(Label.NEXT.func.execute(p, kit), "-1") ? "true" : "false";
-        }
-
         private final IFunc func;
 
         Label(IFunc func) {
             this.func = func;
         }
+
+        static String okay(Player p, Kit kit) {
+            return Objects.equals(Label.NEXT.func.execute(p, kit), "-1") ? "true" : "false";
+        }
     }
 
-    @Override
-    public String onPlaceholderRequest(Player p, String label) {
-        Iterator<String> itr = Arrays.asList(label.split("_")).iterator();
-        Kit kit = L2Pool.kitByName(itr.next());
-        if (nil(kit)) {
-            return "null";
-        }
-        try {
-            return Label.valueOf(itr.next().toUpperCase()).func.execute(p, kit);
-        } catch (Exception thr) {
-            Bukkit.getLogger().log(Level.SEVERE, "", thr);
-        }
-        return "null";
+    interface IFunc {
+
+        String execute(Player p, Kit kit);
     }
 
 }

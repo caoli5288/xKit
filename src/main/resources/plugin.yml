@@ -6,7 +6,7 @@ commands:
   xkit:
     description: None.
     permission: xkit.use
-    
+
 permissions:
   xkit.admin:
     description: None.
@@ -15,5 +15,5 @@ permissions:
     description: None.
     default: true
 
-depend: [ProtocolLib, SimpleORM]
+depend: [ProtocolLib, UltraCore]
 softdepend: [PlaceholderAPI]

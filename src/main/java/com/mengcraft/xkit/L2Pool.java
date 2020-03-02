@@ -17,6 +17,7 @@ public enum L2Pool {
 
     INST;
 
+    public static final Object INVALID = new Object();
     private final Cache<String, Object> pool = CacheBuilder.newBuilder()
             .expireAfterAccess(5, TimeUnit.HOURS)
             .build();
@@ -46,14 +47,24 @@ public enum L2Pool {
     public static Kit kitByName(String name) {
         return valid(INST.pool.get("kit:name:" + name, () -> {
             Kit kit = KitPlugin.getDataSource().find(Kit.class)
-                    .where("name = :name")
-                    .setParameter("name", name)
-                    .findUnique();
+                    .where()
+                    .eq("name", name)
+                    .findOne();
             if (kit == null) {
                 return INVALID;
             }
             return kit;
         }));
+//        return valid(INST.pool.get("kit:name:" + name, () -> {
+//            Kit kit = KitPlugin.getDataSource().find(Kit.class)
+//                    .where("name = :name")
+//                    .setParameter("name", name)
+//                    .findUnique();
+//            if (kit == null) {
+//                return INVALID;
+//            }
+//            return kit;
+//        }));
     }
 
     public static void expire(Player p) {
@@ -68,13 +79,21 @@ public enum L2Pool {
     @SneakyThrows
     public static KitOrder orderBy(Player p, Kit kit) {
         return valid(INST.pool.get(p.getUniqueId() + ":" + kit.getId(), () -> {
-            List<?> order = KitPlugin.getDataSource().find(KitOrder.class)
-                    .where("player = :player and kit_id = :kit_id")
-                    .setParameter("player", p.getUniqueId())
-                    .setParameter("kit_id", kit.getId())
+            List<KitOrder> order = KitPlugin.getDataSource()
+                    .find(KitOrder.class)
+                    .where()
+                    .eq("player", p.getUniqueId())
+                    .eq("kit_id", kit.getId())
                     .orderBy("time desc")
                     .setMaxRows(1)
                     .findList();
+//            List<?> order = KitPlugin.getDataSource().find(KitOrder.class)
+//                    .where("player = :player and kit_id = :kit_id")
+//                    .setParameter("player", p.getUniqueId())
+//                    .setParameter("kit_id", kit.getId())
+//                    .orderBy("time desc")
+//                    .setMaxRows(1)
+//                    .findList();
             return order.isEmpty() ? INVALID : order.iterator().next();
         }));
     }
@@ -82,6 +101,4 @@ public enum L2Pool {
     static <T> T valid(Object input) {
         return input == INVALID ? null : (T) input;
     }
-
-    public static final Object INVALID = new Object();
 }
