@@ -322,6 +322,7 @@ public class KitCommand implements CommandExecutor {
     private void preKitOrder(Player p, Kit kit, boolean force) {
         if (force) {
             kitOrder(p, kit);
+            return;
         }
         String useToken = kit.getUseToken();
         if (useToken == null || useToken.isEmpty()) {
