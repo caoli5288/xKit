@@ -2,6 +2,7 @@ package com.mengcraft.xkit;
 
 import com.mengcraft.xkit.entity.Kit;
 import com.mengcraft.xkit.entity.KitOrder;
+import me.clip.placeholderapi.expansion.PlaceholderExpansion;
 import me.clip.placeholderapi.external.EZPlaceholderHook;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
@@ -17,10 +18,29 @@ import java.util.logging.Level;
 
 import static com.mengcraft.xkit.KitPlugin.nil;
 
-public class KitPlaceholderHook extends EZPlaceholderHook {
+public class KitPlaceholderHook extends PlaceholderExpansion {
 
     public KitPlaceholderHook(Plugin plugin) {
-        super(plugin, "xkit");
+    }
+
+    @Override
+    public String getIdentifier() {
+        return "xkit";
+    }
+
+    @Override
+    public String getAuthor() {
+        return "caoli5288";
+    }
+
+    @Override
+    public String getVersion() {
+        return "1.0";
+    }
+
+    @Override
+    public boolean persist() {
+        return true;
     }
 
     interface IFunc {

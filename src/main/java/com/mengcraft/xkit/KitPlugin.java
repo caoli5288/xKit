@@ -129,8 +129,8 @@ public class KitPlugin extends JavaPlugin implements InventoryHolder {
 
         if (Bukkit.getPluginManager().isPluginEnabled("PlaceholderAPI")) {
             KitPlaceholderHook hook = new KitPlaceholderHook(this);
+            hook.register();
             Formatter.setReplacePlaceholder(true);
-            hook.hook();
         }
 
         getServer().getPluginManager().registerEvents(new KitListener(this, command), this);
